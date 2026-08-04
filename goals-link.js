@@ -1,0 +1,1 @@
+(()=>{const a=document.createElement('a');a.href='objectives.php';a.textContent='Objectifs';a.style.cssText='display:inline-block;margin:12px 18px;color:#197451;font-weight:bold;text-decoration:none';document.querySelector('header')?.append(a)})();

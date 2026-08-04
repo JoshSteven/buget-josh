@@ -1,0 +1,8 @@
+# Identifiants locaux (jamais les mêmes qu'en production)
+config.php
+
+# Export SQL — données financières personnelles réelles
+database/
+
+# Config outil local
+.claude/
