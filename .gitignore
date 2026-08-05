@@ -4,6 +4,7 @@ config.php
 # Export SQL — données financières personnelles réelles
 database/*
 !database/lot-2-migration.sql
+!database/lot-4-migration.sql
 
 # Config outil local
 .claude/
