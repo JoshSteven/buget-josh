@@ -15,7 +15,7 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
 </head>
 <body>
   <header>
-    <nav class="nav"><a href="index.php">← Budgets</a><a href="pilotage.php">Pilotage</a></nav>
+    <nav class="nav"><a href="index.php">← Budgets</a><a href="pilotage.php">Pilotage</a><a href="liaison.php">Liaisons</a></nav>
     <p class="ey">OBJECTIFS</p>
     <h1>Des actions simples, mois par mois.</h1>
     <p class="intro">La vue cartes est pensée pour le téléphone. Choisis un mois, ajoute une action et coche-la quand elle est réalisée.</p>

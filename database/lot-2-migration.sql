@@ -1,10 +1,18 @@
 -- Lot 2 — Pilotage
 -- À exécuter une seule fois sur la base active, après export SQL de sauvegarde.
--- Les clauses IF NOT EXISTS rendent la migration rejouable sur MariaDB/MySQL récents.
+-- Compatible MySQL et MariaDB : `ADD COLUMN IF NOT EXISTS` n'est pas supporté par
+-- MySQL réel (seulement par MariaDB), donc on vérifie via information_schema
+-- avec du SQL préparé plutôt que de compter sur IF NOT EXISTS pour les colonnes.
 
-ALTER TABLE `entries`
-  ADD COLUMN IF NOT EXISTS `note` varchar(300) DEFAULT NULL AFTER `label`,
-  ADD COLUMN IF NOT EXISTS `nature` varchar(40) DEFAULT NULL AFTER `bucket`;
+SET @db := DATABASE();
+
+SET @has_note := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='entries' AND COLUMN_NAME='note');
+SET @sql := IF(@has_note=0, 'ALTER TABLE `entries` ADD COLUMN `note` varchar(300) DEFAULT NULL AFTER `label`', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @has_nature := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='entries' AND COLUMN_NAME='nature');
+SET @sql := IF(@has_nature=0, 'ALTER TABLE `entries` ADD COLUMN `nature` varchar(40) DEFAULT NULL AFTER `bucket`', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 ALTER TABLE `entries`
   MODIFY `status` enum('planned','realised','cancelled') NOT NULL;

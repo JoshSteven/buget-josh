@@ -24,7 +24,7 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
 </head>
 <body>
   <header>
-    <nav class="nav"><a href="index.php">← Budgets</a><a href="objectives.php">Objectifs</a></nav>
+    <nav class="nav"><a href="index.php">← Budgets</a><a href="objectives.php">Objectifs</a><a href="liaison.php">Liaisons</a></nav>
     <p class="ey">PILOTAGE</p>
     <h1>Voir où va l’argent.</h1>
     <p class="intro">Le réel correspond aux dépenses réalisées. L’engagé ajoute les dépenses prévues afin de voir ce qui reste vraiment disponible.</p>
