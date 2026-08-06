@@ -1,6 +1,6 @@
 # Mémoire projet — Dépenses Josh (V2)
 
-Dernière mise à jour : 4 août 2026. Remplace `PROJECT_MEMORY.md` (V1) comme référence active — la V1 reste disponible pour l'historique détaillé (diagnostics, journal pas-à-pas des correctifs), mais **c'est cette V2 qui doit guider le travail à partir de maintenant.**
+Dernière mise à jour : 6 août 2026. Remplace `PROJECT_MEMORY.md` (V1) comme référence active — la V1 reste disponible pour l'historique détaillé (diagnostics, journal pas-à-pas des correctifs), mais **c'est cette V2 qui doit guider le travail à partir de maintenant.**
 
 ## But
 
@@ -101,3 +101,43 @@ La ligne fantôme `"null"` / 1 F CFA est toujours présente en production — an
 - Alertes de limite par catégorie. Modalité du plafond (montant fixe vs pourcentage des revenus) encore à trancher avec l'utilisateur.
 
 Ensuite, lot 3 (refonte Objectifs en cartes mobiles) puis lot 4 (liaison + hors ligne).
+
+
+## État actuel — 6 août 2026 (référence prioritaire)
+
+Cette section remplace les statuts de lots plus anciens présents plus haut lorsqu’ils se contredisent.
+
+### Navigation validée
+
+La navigation principale comporte toujours quatre destinations, dans cet ordre :
+
+1. **Mes budgets** — saisie et suivi des budgets ;
+2. **Mes objectifs** — objectifs globaux et sous-objectifs datés ;
+3. **Lier mes dépenses** — association facultative d’une dépense à un sous-objectif ;
+4. **Tableau de bord** — analyse des revenus, dépenses, disponibilités et plafonds (ancien nom : Pilotage).
+
+Les quatre boutons restent visibles sur chaque page. La page active est sélectionnée. Affichage 2×2 sur mobile et sur une ligne sur ordinateur.
+
+### Objectifs V2 et rappels
+
+- Un objectif global possède un nom et une catégorie facultative.
+- Il contient autant de sous-objectifs que nécessaire.
+- Chaque sous-objectif possède un titre et une date cible précise ; aucun statut supplémentaire n’est affiché dans le nouveau flux.
+- L’interface affiche les jours restants, J−7, demain et les échéances dépassées.
+- Les anciennes actions mensuelles sont préservées : leur date cible initiale devient le dernier jour de leur ancien mois, puis reste modifiable.
+- Les actions secondaires Modifier/Supprimer utilisent partout le menu **…**, avec confirmation avant suppression.
+- Les liaisons affichent désormais la date cible exacte du sous-objectif.
+
+Rythme de rappels validé : point hebdomadaire chaque lundi lorsqu’il reste plus de sept jours, rappel à J−7, rappel à J−1, aucun nouveau rappel après l’échéance.
+
+Architecture : centre de notifications interne + Notifications API + Push API + Service Worker + clés VAPID + bibliothèque PHP `minishlink/web-push` + table MySQL d’abonnements + journal de déduplication + Cron o2switch quotidien. Les secrets VAPID sont dans `notification-secrets.php`, ignoré par Git. La procédure se trouve dans `OBJECTIVES_NOTIFICATIONS.md`.
+
+Migration : `database/lot-5-objectives-notifications.sql` ajoute `goal_tracks.category`, `goal_tasks.target_date`, `goal_reminders` et `push_subscriptions`. Elle est idempotente et a été appliquée deux fois localement sans perte.
+
+### État Git et validation
+
+- Branche locale : `agent/objectifs-notifications`.
+- Commit Objectifs/notifications : `448b6cc`.
+- Push GitHub encore bloqué au 6 août 2026 : clé SSH refusée et `gh` non authentifié. L’utilisateur doit exécuter `gh auth login --hostname github.com --git-protocol https --web`, puis reprendre le push.
+- Validation locale avant navigation renommée : 23 tests Playwright réussis, quatre tailles mobiles, zéro violation Axe critique/sérieuse, audits npm et Composer sans vulnérabilité, Cron testé en dry-run et en exécution sans destinataire.
+- Limite de test : aucun envoi Web Push réel n’a encore été effectué vers un téléphone abonné.

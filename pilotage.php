@@ -7,7 +7,7 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#123b35">
-  <title>Pilotage — Budget Josh</title>
+  <title>Tableau de bord — Budget Josh</title>
   <style>
     :root{--ink:#123b35;--paper:#f4f2ec;--card:#fffefa;--line:#dbe2da;--muted:#647873;--green:#197451;--orange:#e96c48;--red:#b53e25;--purple:#6c5ab0}
     *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px Arial,sans-serif;padding-bottom:40px}
@@ -25,8 +25,8 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
 </head>
 <body>
   <header>
-    <nav class="nav"><a href="index.php">← Budgets</a><a href="objectives.php">Objectifs</a><a href="liaison.php">Liaisons</a></nav>
-    <p class="ey">PILOTAGE</p>
+    <nav class="nav" aria-label="Navigation principale"><a href="index.php">Mes budgets</a><a href="objectives.php">Mes objectifs</a><a href="liaison.php">Lier mes dépenses</a><a href="pilotage.php" aria-current="page">Tableau de bord</a></nav>
+    <p class="ey">TABLEAU DE BORD</p>
     <h1>Voir où va l’argent.</h1>
     <p class="intro">Le réel correspond aux dépenses réalisées. L’engagé ajoute les dépenses prévues afin de voir ce qui reste vraiment disponible.</p>
   </header>

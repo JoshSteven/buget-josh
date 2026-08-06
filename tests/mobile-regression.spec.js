@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 
 test('navigation mobile, animations et menu contextuel', async ({ page }) => {
   await page.goto('/index.php');
-  await expect(page.locator('.app-nav a')).toHaveCount(3);
+  await expect(page.locator('.app-nav a')).toHaveCount(4);
   await expect(page.locator('.app-nav a').first()).toHaveCSS('min-height', '48px');
   expect(await page.evaluate(() => [typeof window.gsap, typeof window.Lenis])).toEqual(['object', 'function']);
   await expect(page.getByRole('button', { name: 'Plus d’actions' }).first()).toBeVisible();
