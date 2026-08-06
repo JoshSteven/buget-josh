@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/sc1tijo0515/depensesjosh.brightlightmind.online/
+    - /usr/bin/rsync -rv --exclude=.git --exclude=.cpanel.yml ./ $DEPLOYPATH
