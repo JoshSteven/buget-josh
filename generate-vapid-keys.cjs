@@ -1,0 +1,14 @@
+const fs = require('fs');
+const crypto = require('crypto');
+const path = require('path');
+const target = path.join(__dirname, 'notification-secrets.php');
+if (fs.existsSync(target)) throw new Error('notification-secrets.php existe déjà. Aucun écrasement.');
+const ecdh = crypto.createECDH('prime256v1');
+ecdh.generateKeys();
+const publicKey = ecdh.getPublicKey().toString('base64url');
+const privateKey = ecdh.getPrivateKey().toString('base64url');
+const subject = process.argv[2] || 'mailto:admin@example.com';
+const quote = value => `'${String(value).replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`;
+const content = `<?php\nreturn [\n  'vapid_public_key' => ${quote(publicKey)},\n  'vapid_private_key' => ${quote(privateKey)},\n  'vapid_subject' => ${quote(subject)},\n];\n`;
+fs.writeFileSync(target, content, { flag: 'wx', mode: 0o600 });
+process.stdout.write('Clés VAPID créées dans notification-secrets.php (fichier ignoré par Git).\n');

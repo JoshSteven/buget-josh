@@ -5,6 +5,7 @@ config.php
 database/*
 !database/lot-2-migration.sql
 !database/lot-4-migration.sql
+!database/lot-5-objectives-notifications.sql
 
 # Config outil local
 .claude/
@@ -14,3 +15,9 @@ node_modules/
 test-results/
 playwright-report/
 .codex-browser/
+
+# Dépendances Composer installées au déploiement
+vendor/
+
+notification-secrets.php
+debug.log
