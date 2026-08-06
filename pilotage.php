@@ -21,6 +21,7 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
     .nature-head{align-items:center}.nature b{font-size:13px}.nature strong{font-size:14px}.nature .bar{margin:9px 0 0;height:6px;background:#edf0eb}.nature .bar i{background:var(--purple)}
     .empty{background:var(--card);border:1px dashed var(--line);border-radius:15px;padding:16px;color:var(--muted);font-size:13px}.settings{background:#edf3ed;border-radius:16px;padding:16px}.settings p{margin:0 0 12px;color:var(--muted);font-size:12px;line-height:1.4}.limit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.limit-box{background:var(--card);padding:12px;border-radius:12px}.limit-box label{display:block;font-size:12px;font-weight:bold;margin-bottom:7px}.limit-box small{display:block;color:var(--muted);font-size:10px;margin-top:6px}.setting-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}.status{font-size:12px;color:var(--green);min-height:16px;margin:8px 0 0}.hidden{display:none}@media(min-width:680px){.metrics{grid-template-columns:repeat(5,1fr)}}@media(max-width:480px){header,main{padding-left:12px;padding-right:12px}.category-grid,.limit-grid{grid-template-columns:1fr}.toolbar{align-items:stretch;flex-direction:column}}
   </style>
+  <link rel="stylesheet" href="assets/vendor/lenis.css?v=<?= $v('assets/vendor/lenis.css') ?>">
 </head>
 <body>
   <header>
@@ -37,6 +38,9 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
     <section><div class="section-title"><h2>Top 3 des natures</h2><small>Réalisées + prévues</small></div><div class="nature-list" id="natures"></div></section>
     <section><div class="section-title"><h2>Plafonds</h2><small>Synchronisés avec la base</small></div><div class="settings"><p>Configure un montant fixe ou un pourcentage des revenus pour chaque catégorie. Une alerte apparaît à 80 %, puis devient critique quand le plafond est dépassé.</p><form id="limitsForm"><div class="limit-grid"><div class="limit-box"><label for="priorityMode">Priorités</label><select id="priorityMode"><option value="fixed">Montant fixe</option><option value="percent">Pourcentage des revenus</option></select><input id="priorityValue" type="number" min="0" step="1" placeholder="Désactivé"><small id="priorityHint"></small></div><div class="limit-box"><label for="dogsMode">Petits chiens</label><select id="dogsMode"><option value="fixed">Montant fixe</option><option value="percent">Pourcentage des revenus</option></select><input id="dogsValue" type="number" min="0" step="1" placeholder="Désactivé"><small id="dogsHint"></small></div></div><div class="setting-actions"><button type="submit">Enregistrer les plafonds</button></div><p class="status" id="settingsStatus" role="status"></p></form></div></section>
   </main>
+  <script src="assets/vendor/gsap.min.js?v=<?= $v('assets/vendor/gsap.min.js') ?>"></script>
+  <script src="assets/vendor/lenis.min.js?v=<?= $v('assets/vendor/lenis.min.js') ?>"></script>
   <script src="pilotage.js?v=<?= $v('pilotage.js') ?>"></script>
+  <script src="mobile-motion.js?v=<?= $v('mobile-motion.js') ?>"></script>
 </body>
 </html>

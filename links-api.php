@@ -18,7 +18,8 @@ try {
         echo json_encode(compact('expenses', 'tasks'), JSON_UNESCAPED_UNICODE);
         exit;
     }
-    $data = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') linksFail('Méthode non autorisée.',405);
+    try {$data = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);} catch(Throwable){linksFail('Données invalides.');}
     $entryId = (string) ($data['entry_id'] ?? '');
     $taskId = $data['goal_task_id'] ?? null;
     if ($entryId === '') linksFail('Dépense introuvable.');
@@ -30,8 +31,9 @@ try {
     } else {
         $taskId = null;
     }
+    $entry=$pdo->prepare("SELECT id FROM entries WHERE id=? AND type='expense' AND status<>'cancelled'");$entry->execute([$entryId]);if(!$entry->fetchColumn())linksFail('Dépense introuvable.',404);
     $pdo->prepare('UPDATE entries SET goal_task_id=? WHERE id=?')->execute([$taskId, $entryId]);
     echo json_encode(['ok' => true], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $error) {
-    linksFail($error->getMessage(), 500);
+    linksFail('Impossible de traiter la liaison.', 500);
 }

@@ -8,3 +8,9 @@ database/*
 
 # Config outil local
 .claude/
+
+# Dépendances et artefacts de tests locaux
+node_modules/
+test-results/
+playwright-report/
+.codex-browser/

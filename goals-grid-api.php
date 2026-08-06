@@ -12,7 +12,8 @@ try {
         echo json_encode(compact('tracks', 'tasks'), JSON_UNESCAPED_UNICODE);
         exit;
     }
-    $data = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); throw new RuntimeException('Méthode non autorisée.'); }
+    try { $data = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR); } catch (Throwable) { throw new RuntimeException('Données invalides.'); }
     if ($action === 'track') {
         $title = trim((string) ($data['title'] ?? ''));
         if ($title === '') throw new RuntimeException('Le titre est obligatoire.');
@@ -20,20 +21,22 @@ try {
     } elseif ($action === 'task') {
         $title = trim((string) ($data['title'] ?? ''));
         if ($title === '') throw new RuntimeException('L’action est obligatoire.');
+        $month=(string)($data['goal_month']??''); if(!preg_match('/^\d{4}-\d{2}$/',$month)||$month<'2026-07'||$month>'2027-12') throw new RuntimeException('Mois d’objectif invalide.');
         $pdo->prepare('INSERT INTO goal_tasks(id,track_id,goal_month,title) VALUES(?,?,?,?)')->execute([$data['id'], $data['track_id'], $data['goal_month'], $title]);
     } elseif ($action === 'toggle') {
-        $pdo->prepare("UPDATE goal_tasks SET status=IF(status='planned','realised','planned') WHERE id=?")->execute([$data['id']]);
+        $q=$pdo->prepare("UPDATE goal_tasks SET status=IF(status='planned','realised','planned') WHERE id=?");$q->execute([$data['id']]);if(!$q->rowCount()){http_response_code(404);throw new RuntimeException('Action introuvable.');}
     } elseif ($action === 'track_update') {
         $title = trim((string) ($data['title'] ?? ''));
         if ($title === '') throw new RuntimeException('Le titre est obligatoire.');
-        $pdo->prepare('UPDATE goal_tracks SET title=? WHERE id=?')->execute([$title, $data['id']]);
+        $q=$pdo->prepare('UPDATE goal_tracks SET title=? WHERE id=?');$q->execute([$title,$data['id']]);if(!$q->rowCount()){http_response_code(404);throw new RuntimeException('Objectif introuvable.');}
     } elseif ($action === 'track_delete') {
-        $pdo->prepare('DELETE FROM goal_tracks WHERE id=?')->execute([$data['id']]);
+        $q=$pdo->prepare('DELETE FROM goal_tracks WHERE id=?');$q->execute([$data['id']]);if(!$q->rowCount()){http_response_code(404);throw new RuntimeException('Objectif introuvable.');}
     } else {
         throw new RuntimeException('Action inconnue.');
     }
     echo json_encode(['ok' => true], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $error) {
-    http_response_code(422);
-    echo json_encode(['error' => $error->getMessage()], JSON_UNESCAPED_UNICODE);
+    if(http_response_code()===200) http_response_code($error instanceof RuntimeException?422:500);
+    $message=$error instanceof RuntimeException?$error->getMessage():'Impossible de traiter la demande.';
+    echo json_encode(['error' => $message], JSON_UNESCAPED_UNICODE);
 }

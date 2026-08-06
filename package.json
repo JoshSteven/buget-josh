@@ -1,0 +1,26 @@
+{
+  "name": "buget-josh",
+  "version": "1.0.0",
+  "description": "Cette version reprend la méthode du fichier Excel : apports personnels ou liés aux projets (TEDxOuaga, CAFDO, YELEKO), dîme automatique à 10 %, priorités non obligatoires, catégorie **Petits chiens**, dépenses prévues ou réalisées et objectifs annuels à dérouler par mois.",
+  "main": "app-v6.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joshsteven/buget-josh.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/joshsteven/buget-josh/issues"
+  },
+  "homepage": "https://github.com/joshsteven/buget-josh#readme",
+  "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.62.1"
+  },
+  "dependencies": {
+    "gsap": "^3.15.0",
+    "lenis": "^1.3.26"
+  }
+}
