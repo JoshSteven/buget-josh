@@ -128,7 +128,7 @@ La navigation principale comporte toujours quatre destinations, dans cet ordre :
 3. **Lier mes dépenses** — association facultative d’une dépense à un sous-objectif ;
 4. **Tableau de bord** — analyse des revenus, dépenses, disponibilités et plafonds (ancien nom : Pilotage).
 
-Les quatre boutons restent visibles sur chaque page. La page active est sélectionnée. Affichage 2×2 sur mobile et sur une ligne sur ordinateur.
+Les quatre boutons restent visibles sur chaque page. La page active est sélectionnée. Sur mobile, une barre fixe inférieure affiche une icône et un libellé court par destination, avec une marge prenant en compte les zones sûres iOS/Android ; sur ordinateur, les quatre boutons restent sur une ligne dans l’en-tête.
 
 ### Objectifs V2 et rappels
 
@@ -153,3 +153,4 @@ Migration : `database/lot-5-objectives-notifications.sql` ajoute `goal_tracks.ca
 - Push GitHub encore bloqué au 6 août 2026 : clé SSH refusée et `gh` non authentifié. L’utilisateur doit exécuter `gh auth login --hostname github.com --git-protocol https --web`, puis reprendre le push.
 - Validation locale avant navigation renommée : 23 tests Playwright réussis, quatre tailles mobiles, zéro violation Axe critique/sérieuse, audits npm et Composer sans vulnérabilité, Cron testé en dry-run et en exécution sans destinataire.
 - Limite de test : aucun envoi Web Push réel n’a encore été effectué vers un téléphone abonné.
+- Diagnostic Push : le centre distingue désormais contexte non sécurisé, navigateur intégré sans PushManager/Notification, permission refusée et clés VAPID absentes. Le Web Push local doit être testé sur `localhost`/HTTPS dans un navigateur complet ; la réception réelle nécessite un appareil abonné.

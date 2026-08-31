@@ -17,6 +17,9 @@
 3. Lier mes dépenses
 4. Tableau de bord
 
+- Sur téléphone : barre fixe inférieure à 4 icônes, libellés courts et zone sûre iOS/Android.
+- Sur ordinateur : navigation horizontale à 4 boutons dans l’en-tête.
+
 ## Invariants
 
 - Données de production personnelles : sauvegarde SQL avant toute migration.

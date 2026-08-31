@@ -11,6 +11,7 @@ Application personnelle qui remplace le tableur de Josh et relie budgets, analys
 - Données : MySQL/MariaDB.
 - PWA : manifest, Service Worker, cache et file hors connexion.
 - Push : Push API, Notifications API, VAPID, `minishlink/web-push`, abonnements MySQL et Cron o2switch.
+- Navigation : barre inférieure fixe sur mobile (icône + libellé court, zone sûre) et navigation 4 boutons horizontale sur desktop, partagée par les quatre écrans.
 - Tests : Playwright sur 320×568, 360×800, 390×844 et 430×932, plus Axe.
 
 ## Flux Objectifs actif

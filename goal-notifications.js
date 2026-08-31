@@ -19,6 +19,14 @@
   };
   let reminders = [];
 
+  function pushSupportMessage() {
+    if (!window.isSecureContext) return 'Les notifications nécessitent HTTPS (ou localhost). Ouvrez l’application via https://depensesjosh.brightlightmind.online ou http://localhost:8080.';
+    if (!('Notification' in window)) return 'Ce navigateur intégré ne prend pas en charge les notifications système. Ouvrez Budget Josh dans Chrome, Edge ou Firefox.';
+    if (!('serviceWorker' in navigator)) return 'Ce navigateur ne permet pas le service worker nécessaire aux notifications.';
+    if (!('PushManager' in window)) return 'Ce navigateur intégré ne prend pas en charge le Web Push. Ouvrez cette page dans le navigateur du téléphone ou de l’ordinateur.';
+    return '';
+  }
+
   async function load() {
     try {
       const data = await api('reminders');
@@ -55,13 +63,15 @@
   async function enable() {
     const status = $('#pushStatus');
     try {
-      if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) throw Error('Les notifications système ne sont pas disponibles sur cet appareil.');
+      const supportMessage = pushSupportMessage();
+      if (supportMessage) throw Error(supportMessage);
       if (Notification.permission === 'denied') throw Error('Les notifications sont bloquées dans les réglages du navigateur.');
       const config = await api('config');
       if (!config.available) throw Error('Les clés Web Push ne sont pas encore configurées sur le serveur.');
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') throw Error('Autorisation non accordée.');
       const registration = await navigator.serviceWorker.ready;
+      if (!registration.pushManager) throw Error('Le service worker est actif, mais le Web Push est indisponible dans ce navigateur.');
       let subscription = await registration.pushManager.getSubscription();
       if (!subscription) subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(config.publicKey) });
       const json = subscription.toJSON();
@@ -78,7 +88,8 @@
     button.disabled = true;
     status.textContent = 'Envoi du test…';
     try {
-      if (!('serviceWorker' in navigator) || !('PushManager' in window)) throw Error('Le Web Push n’est pas disponible sur cet appareil.');
+      const supportMessage = pushSupportMessage();
+      if (supportMessage) throw Error(supportMessage);
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.getSubscription();
       if (!subscription) throw Error('Activez d’abord les notifications sur cet appareil.');
@@ -91,7 +102,12 @@
     }
   }
 
-  $('#openNotifications').onclick = () => { $('#notificationsDialog').showModal(); load(); };
+  $('#openNotifications').onclick = () => {
+    $('#notificationsDialog').showModal();
+    const supportMessage = pushSupportMessage();
+    if (supportMessage) $('#pushStatus').textContent = supportMessage;
+    load();
+  };
   $('#enablePush').onclick = enable;
   $('#testPush').onclick = testPush;
   load();
