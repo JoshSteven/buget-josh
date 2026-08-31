@@ -20,11 +20,12 @@ function goalReminderType(int $daysRemaining, DateTimeImmutable $today): ?string
 function materializeGoalReminders(PDO $pdo, ?DateTimeImmutable $date = null): int
 {
     $today = $date ?? new DateTimeImmutable('today', new DateTimeZone('Africa/Ouagadougou'));
-    $query = $pdo->prepare("SELECT id,target_date FROM goal_tasks WHERE target_date IS NOT NULL AND status<>'realised' AND target_date>=?");
+    $query = $pdo->prepare("SELECT id,target_date FROM goal_tasks WHERE target_date IS NOT NULL AND status<>'realised' AND target_date>=? ORDER BY target_date ASC");
     $query->execute([$today->format('Y-m-d')]);
+    $tasks = $query->fetchAll(PDO::FETCH_ASSOC);
     $insert = $pdo->prepare('INSERT IGNORE INTO goal_reminders(id,task_id,reminder_type,due_date) VALUES(?,?,?,?)');
     $created = 0;
-    foreach ($query->fetchAll(PDO::FETCH_ASSOC) as $task) {
+    foreach ($tasks as $task) {
         $target = new DateTimeImmutable((string) $task['target_date'], $today->getTimezone());
         $days = (int) $today->diff($target)->format('%a');
         $type = goalReminderType($days, $today);
@@ -32,6 +33,15 @@ function materializeGoalReminders(PDO $pdo, ?DateTimeImmutable $date = null): in
         $insert->execute([goalUuid(), $task['id'], $type, $today->format('Y-m-d')]);
         $created += $insert->rowCount();
     }
+
+    // Rappel quotidien : une seule notification par jour, toujours pointée sur
+    // l'action à échéance la plus proche (liste déjà triée par target_date ASC).
+    // S'il n'y a aucune action à venir, on n'envoie rien plutôt qu'un message vide.
+    if ($tasks) {
+        $insert->execute([goalUuid(), $tasks[0]['id'], 'daily', $today->format('Y-m-d')]);
+        $created += $insert->rowCount();
+    }
+
     return $created;
 }
 
@@ -42,7 +52,7 @@ function goalReminderMessage(string $type, string $taskTitle, string $trackTitle
         'j1' => 'Échéance demain',
         default => 'Point sur vos objectifs',
     };
-    $body = $type === 'weekly'
+    $body = in_array($type, ['weekly', 'daily'], true)
         ? "Où en êtes-vous avec « {$taskTitle} » dans {$trackTitle} ?"
         : "« {$taskTitle} » — {$days} jour" . ($days > 1 ? 's' : '') . ' restant' . ($days > 1 ? 's' : '') . '.';
     return compact('title', 'body');

@@ -7,6 +7,7 @@ database/*
 !database/lot-4-migration.sql
 !database/lot-5-objectives-notifications.sql
 !database/lot-6-goal-planning.sql
+!database/lot-7-daily-goal-reminder.sql
 
 # Config outil local
 .claude/
