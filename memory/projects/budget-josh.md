@@ -22,7 +22,7 @@ Les champs de cadrage ajoutés par le lot 6 sont facultatifs afin de préserver 
 
 ## Notifications
 
-Le centre interne matérialise les rappels hebdomadaires, J−7 et J−1. Le Cron CLI quotidien envoie les Push dus. Le bouton « Tester maintenant » envoie un Push immédiat au seul abonnement du navigateur courant et permet de diagnostiquer le circuit sans attendre une échéance.
+Le centre interne matérialise les rappels hebdomadaires, J−7, J−1, et désormais un rappel **quotidien** pointé sur l'action à échéance la plus proche (lot 7, 31 août 2026). Le Cron CLI tourne à 20h heure serveur (le serveur o2switch est en heure de Paris CEST/CET, pas en UTC) pour viser 18h GMT. Le bouton « Tester maintenant » envoie un Push immédiat au seul abonnement du navigateur courant et permet de diagnostiquer le circuit sans attendre une échéance — confirmé fonctionnel de bout en bout sur téléphone le 31 août 2026 (obstacle rencontré : blocage anti-spam Chrome Android, levé par "Effacer et réinitialiser" les données du site).
 
 ## Déploiement
 

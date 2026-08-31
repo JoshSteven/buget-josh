@@ -14,6 +14,15 @@ Dernière mise à jour : 31 août 2026. Remplace `PROJECT_MEMORY.md` (V1) comme 
 - Le Cron marque désormais chaque rappel seulement si au moins un appareil l’a réellement reçu et nettoie les abonnements expirés.
 - Validation locale du lot : syntaxe PHP/JS, migration répétée, tests API, quatre tailles mobiles, accessibilité Axe, suite Playwright complète et audits de dépendances. Un vrai téléphone abonné reste nécessaire pour prouver la réception Push hors navigateur automatisé.
 
+## Mise à jour du 31 août 2026 (soirée) — déploiement rattrapé, Push vérifié, lot 7
+
+- **Déploiement de production débloqué** : le dépôt GitHub était passé en privé sans que le remote Git cPanel (URL HTTPS sans jeton) ne puisse plus s'authentifier — la prod était restée figée sur le commit du 9 août pendant 3 semaines. Dépôt repassé en public, `Update from Remote` + `Deploy HEAD Commit` rejoués : prod à jour.
+- **PHP relevé de 8.1 à 8.3** au niveau du compte cPanel (isolation par domaine désactivée par l'hébergeur, réglage global partagé par les 8 domaines du compte — vérifié sans risque, seul `brightmind.africa` a du contenu réel et tourne en Node.js). `nd_pdo_mysql` (variante native driver) reste actif, pas de régression. `composer install --no-dev` refait sur le serveur, `vendor/` à jour.
+- **Web Push confirmé fonctionnel de bout en bout sur téléphone** (notification de test reçue). Blocage rencontré : Chrome Android classe parfois un site en "Automatiquement bloqué" (anti-spam), qui ne se lève qu'avec "Effacer et réinitialiser" les données du site, pas en changeant juste le réglage Autorisations.
+- **Lot 7 — Rappel quotidien 18h GMT** (demande explicite) : nouveau type de rappel `daily`, une notification par jour pointée sur l'action à échéance la plus proche, même message que `weekly`. Migration `database/lot-7-daily-goal-reminder.sql`. Cron modifié de 08:00 à 20:00 heure serveur (le serveur o2switch tourne en heure de Paris CEST/CET, pas en UTC — vérifié via `date -u; date`), pour viser 18h GMT (décalage d'1h accepté aux changements d'heure saisonniers).
+- **Icône de notification corrigée** : `sw.js` n'utilise plus `icon-192.png` comme `badge` (icône opaque sans transparence → Android l'affichait en carré plein). Cache bumpé en conséquence.
+- Déployé et vérifié en production (commit `2300b15`, migration appliquée, `cron-goal-reminders.php --dry-run` propre).
+
 ## But
 
 Application personnelle de gestion de budgets et d'objectifs, pensée d'abord pour téléphone, qui remplace un tableur Excel. Deux objectifs explicites de l'utilisateur pour cette phase :
@@ -31,7 +40,7 @@ Ne jamais enregistrer de mot de passe dans ce fichier.
 
 ## Stack
 
-HTML/CSS/JS natif (sans framework) + PHP + MySQL. Local : Laragon. Production : o2switch/cPanel. Déploiement des fichiers PHP/JS via l'API cPanel `Fileman::savefile` (contourne un bug de confirmation JS dans l'éditeur cPanel) — vérifier après coup par longueur/hash exacts, pas seulement visuellement.
+HTML/CSS/JS natif (sans framework) + PHP + MySQL. Local : Laragon. Production : o2switch/cPanel. **Déploiement via GitHub** (dépôt `JoshSteven/buget-josh`, public) + cPanel Git™ Version Control (`Update from Remote` puis `Deploy HEAD Commit`) — l'éditeur de fichiers cPanel est évité (son bouton "Enregistrer" déclenche un `confirm()` navigateur bloquant en automatisation). Vérifier après un déploiement que le HEAD Commit affiché correspond au commit poussé.
 
 ## Acquis de la V1 (prérequis — tout ceci fonctionne et ne doit pas régresser)
 
