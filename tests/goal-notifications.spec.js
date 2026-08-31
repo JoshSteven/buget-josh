@@ -24,11 +24,18 @@ test('le centre affiche le rappel J-1 et la configuration push', async ({ page, 
   await expect(dialog.getByText('Échéance demain', { exact: true })).toBeVisible();
   await expect(dialog.getByText(/AUDIT Échéance demain/)).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Activer les notifications' })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Tester maintenant' })).toBeVisible();
 });
 
 test('les abonnements push non HTTPS sont rejetés', async ({ request }) => {
   const response = await request.post('/notifications-api.php?action=subscribe', { data: { endpoint: 'http://example.test/push', keys: { p256dh: 'x', auth: 'y' } } });
   expect(response.status()).toBe(422);
+});
+
+test('un test push exige un appareil préalablement enregistré', async ({ request }) => {
+  const response = await request.post('/notifications-api.php?action=test', { data: { endpoint: 'https://example.test/push-not-registered' } });
+  expect(response.status()).toBe(404);
+  await expect(response.json()).resolves.toMatchObject({ error: /pas encore enregistré/ });
 });
 
 test('le service worker gère réception et clic sur notification', async ({ request }) => {

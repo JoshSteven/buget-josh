@@ -1,4 +1,4 @@
-const CACHE='budget-josh-shell-v5';
+const CACHE='budget-josh-shell-v6';
 const SHELL=['./','index.php','app-v6.js','draft-flow.js','goals-link.js','offline-sync.js','mobile-motion.js','objectives.php','objectives-v2.php','objectives-v2.js','goal-notifications.js','assets/vendor/gsap.min.js','assets/vendor/lenis.min.js','assets/vendor/lenis.css','uuid-polyfill.js','icon-192.png','icon-512.png','manifest.webmanifest'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>Promise.allSettled(SHELL.map(asset=>cache.add(asset)))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});

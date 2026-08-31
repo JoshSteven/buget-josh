@@ -1,6 +1,18 @@
 # Mémoire projet — Dépenses Josh (V2)
 
-Dernière mise à jour : 6 août 2026. Remplace `PROJECT_MEMORY.md` (V1) comme référence active — la V1 reste disponible pour l'historique détaillé (diagnostics, journal pas-à-pas des correctifs), mais **c'est cette V2 qui doit guider le travail à partir de maintenant.**
+Dernière mise à jour : 31 août 2026. Remplace `PROJECT_MEMORY.md` (V1) comme référence active — la V1 reste disponible pour l'historique détaillé (diagnostics, journal pas-à-pas des correctifs), mais **c'est cette V2 qui doit guider le travail à partir de maintenant.**
+
+## État actuel — 31 août 2026 (référence prioritaire)
+
+- `master` est la branche active et suit `origin/master`.
+- La page **Mes objectifs** utilise des cartes illustrées et ouvre chaque plan dans un tiroir : en bas sur mobile, latéral sur ordinateur.
+- Les étapes existantes restent dans `goal_tasks` et les liaisons de dépenses restent attachées à `entries.goal_task_id`.
+- La progression est calculée depuis les statuts réels `planned`/`realised`, jamais saisie manuellement. La prochaine action est la première étape non terminée par ordre de date.
+- `database/lot-6-goal-planning.sql` ajoute à `goal_tracks` les champs facultatifs `icon_key`, `motivation`, `success_definition`, `resources` et `obstacles`. La migration est idempotente et a été appliquée deux fois localement.
+- Le tiroir affiche un parcours visuel, la réussite attendue, la motivation, les moyens, les obstacles et une question de challenge contextuelle.
+- Le centre de rappels possède un bouton **Tester maintenant** : il envoie un vrai Push à l’appareil abonné sans attendre J−7/J−1. Les abonnements expirés sont supprimés automatiquement.
+- Le Cron marque désormais chaque rappel seulement si au moins un appareil l’a réellement reçu et nettoie les abonnements expirés.
+- Validation locale du lot : syntaxe PHP/JS, migration répétée, tests API, quatre tailles mobiles, accessibilité Axe, suite Playwright complète et audits de dépendances. Un vrai téléphone abonné reste nécessaire pour prouver la réception Push hors navigateur automatisé.
 
 ## But
 

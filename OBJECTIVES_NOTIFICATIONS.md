@@ -38,6 +38,19 @@
 
 Les rappels sont dédupliqués par sous-objectif, type et date. Le centre de notifications interne fonctionne même sans autorisation système. Le Web Push nécessite HTTPS, une autorisation accordée par l’utilisateur, les clés VAPID et le Cron serveur.
 
+## Diagnostic depuis l’application
+
+Dans **Mes objectifs → Rappels** :
+
+1. choisir **Activer les notifications** sur l’appareil concerné ;
+2. accepter l’autorisation du navigateur ;
+3. choisir **Tester maintenant** sans attendre une échéance ;
+4. vérifier que la notification « Test Budget Josh » apparaît.
+
+Le test échoue explicitement si l’appareil n’est pas enregistré, si les clés VAPID sont absentes, si l’abonnement a expiré ou si le service Push refuse le message. Un abonnement expiré est retiré de la base et doit être recréé avec **Activer les notifications**.
+
+Le test immédiat valide l’abonnement, VAPID, la bibliothèque PHP, le service Push et le Service Worker. Il ne valide pas le déclenchement automatique du Cron, qui doit être vérifié séparément avec `--dry-run`, puis par un passage réel à une date de rappel.
+
 ## Fichiers sensibles
 
 - `config.php` : identifiants MySQL, ignoré par Git ;
