@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+require __DIR__ . "/auth.php";
+budgetRequireAuthPage();
 $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time();
 ?><!doctype html>
 <html lang="fr">
@@ -38,7 +40,7 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
     <section><div class="section-title"><h2>Top 3 des natures</h2><small>Réalisées + prévues</small></div><div class="nature-list" id="natures"></div></section>
     <section><div class="section-title"><h2>Plafonds</h2><small>Synchronisés avec la base</small></div><div class="settings"><p>Configure un montant fixe ou un pourcentage des revenus pour chaque catégorie. Une alerte apparaît à 80 %, puis devient critique quand le plafond est dépassé.</p><form id="limitsForm"><div class="limit-grid"><div class="limit-box"><label for="priorityMode">Priorités</label><select id="priorityMode"><option value="fixed">Montant fixe</option><option value="percent">Pourcentage des revenus</option></select><input id="priorityValue" type="number" min="0" step="1" placeholder="Désactivé"><small id="priorityHint"></small></div><div class="limit-box"><label for="dogsMode">Petits chiens</label><select id="dogsMode"><option value="fixed">Montant fixe</option><option value="percent">Pourcentage des revenus</option></select><input id="dogsValue" type="number" min="0" step="1" placeholder="Désactivé"><small id="dogsHint"></small></div></div><div class="setting-actions"><button type="submit">Enregistrer les plafonds</button></div><p class="status" id="settingsStatus" role="status"></p></form></div></section>
   </main>
-  <script src="assets/vendor/gsap.min.js?v=<?= $v('assets/vendor/gsap.min.js') ?>"></script>
+  <script src="session-guard.js?v=<?= $v("session-guard.js") ?>"></script><script src="assets/vendor/gsap.min.js?v=<?= $v('assets/vendor/gsap.min.js') ?>"></script>
   <script src="assets/vendor/lenis.min.js?v=<?= $v('assets/vendor/lenis.min.js') ?>"></script>
   <script src="pilotage.js?v=<?= $v('pilotage.js') ?>"></script>
   <script src="mobile-motion.js?v=<?= $v('mobile-motion.js') ?>"></script>

@@ -2,6 +2,8 @@
 declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
+require __DIR__ . '/auth.php';
+budgetRequireAuthApi();
 
 const GOAL_ICONS = ['target', 'car', 'book', 'home', 'health', 'travel', 'business', 'money', 'faith', 'family'];
 

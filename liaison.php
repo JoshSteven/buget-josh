@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+require __DIR__ . "/auth.php";
+budgetRequireAuthPage();
 $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time();
 ?><!doctype html>
 <html lang="fr">
@@ -17,7 +19,7 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
 <body>
   <header><nav class="nav" aria-label="Navigation principale"><a href="index.php">Mes budgets</a><a href="objectives.php">Mes objectifs</a><a href="liaison.php" aria-current="page">Lier mes dépenses</a><a href="pilotage.php">Tableau de bord</a></nav><p class="ey">LIER MES DÉPENSES</p><h1>Relier dépenses et objectifs.</h1><p class="intro">Associe facultativement chaque dépense à l’action d’objectif qu’elle soutient. Laisse « Aucune action » si elle n’est liée à aucun objectif.</p></header>
   <main><div class="toolbar"><select id="budgetFilter" aria-label="Filtrer par budget"><option value="all">Tous les budgets</option></select><select id="statusFilter" aria-label="Filtrer par statut"><option value="all">Toutes les dépenses</option><option value="planned">Prévues</option><option value="realised">Réalisées</option></select></div><div class="expenses" id="expenses"></div></main>
-  <script src="assets/vendor/gsap.min.js?v=<?= $v('assets/vendor/gsap.min.js') ?>"></script>
+  <script src="session-guard.js?v=<?= $v("session-guard.js") ?>"></script><script src="assets/vendor/gsap.min.js?v=<?= $v('assets/vendor/gsap.min.js') ?>"></script>
   <script src="assets/vendor/lenis.min.js?v=<?= $v('assets/vendor/lenis.min.js') ?>"></script>
   <script src="liaison.js?v=<?= $v('liaison.js') ?>"></script>
   <script src="mobile-motion.js?v=<?= $v('mobile-motion.js') ?>"></script>

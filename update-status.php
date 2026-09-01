@@ -1,4 +1,5 @@
 <?php
 declare(strict_types=1); header('Content-Type: application/json; charset=utf-8');
+require __DIR__.'/auth.php'; budgetRequireAuthApi();
 function statusFail(string $m,int $s=422):never{http_response_code($s);echo json_encode(['error'=>$m],JSON_UNESCAPED_UNICODE);exit;}
 try{if($_SERVER['REQUEST_METHOD']!=='POST')statusFail('Méthode non autorisée.',405);try{$d=json_decode(file_get_contents('php://input'),true,512,JSON_THROW_ON_ERROR);}catch(Throwable){statusFail('Données invalides.');}if(empty($d['id'])||!in_array($d['status']??'', ['planned','realised','cancelled'],true))statusFail('Statut invalide.');$c=require __DIR__.'/config.php';$pdo=new PDO("mysql:host={$c['host']};dbname={$c['database']};charset=utf8mb4",$c['username'],$c['password'],[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);$q=$pdo->prepare('SELECT id FROM entries WHERE id=?');$q->execute([$d['id']]);if(!$q->fetchColumn())statusFail('Dépense introuvable.',404);$pdo->prepare('UPDATE entries SET status=? WHERE id=?')->execute([$d['status'],$d['id']]);echo json_encode(['ok'=>true]);}catch(Throwable){statusFail('Impossible de mettre à jour la dépense.',500);}

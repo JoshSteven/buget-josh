@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+require __DIR__ . '/auth.php';
+budgetRequireAuthPage();
 $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time();
 ?><!doctype html>
 <html lang="fr">
@@ -62,7 +64,7 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
 </dialog>
 
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');</script>
-<script src="uuid-polyfill.js"></script>
+<script src="session-guard.js?v=<?= $v("session-guard.js") ?>"></script><script src="uuid-polyfill.js"></script>
 <script src="assets/vendor/gsap.min.js?v=<?= $v('assets/vendor/gsap.min.js') ?>"></script>
 <script src="assets/vendor/lenis.min.js?v=<?= $v('assets/vendor/lenis.min.js') ?>"></script>
 <script src="objectives-v2.js?v=<?= $v('objectives-v2.js') ?>"></script>

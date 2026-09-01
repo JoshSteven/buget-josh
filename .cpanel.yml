@@ -2,10 +2,13 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/sc1tijo0515/depensesjosh.brightlightmind.online/
-    # .htaccess est exclu du deploiement : cPanel (Confidentialite du repertoire) y
-    # ecrit directement les directives AuthType/AuthUserFile pour la protection par
-    # mot de passe du sous-domaine. Un rsync sans exclusion ecrase ce fichier avec
-    # la version suivie par Git (qui ne contient que DirectoryIndex) et desactive
-    # la protection en production sans avertissement. Si le contenu suivi de
-    # .htaccess doit un jour changer, l'appliquer manuellement sur le serveur.
-    - /usr/bin/rsync -rv --exclude=.git --exclude=.cpanel.yml --exclude=.htaccess ./ $DEPLOYPATH
+    # Le .htaccess DE LA RACINE est exclu du deploiement : cPanel (Confidentialite du
+    # repertoire) y ecrit directement les directives AuthType/AuthUserFile. Un rsync
+    # sans exclusion l'ecrase avec la version suivie par Git et desactive la protection
+    # en production sans avertissement (c'est arrive le 9 aout 2026).
+    #
+    # L'exclusion est ANCREE avec « / » : sans elle, rsync exclut tout fichier nomme
+    # .htaccess a n'importe quelle profondeur, y compris database/.htaccess et
+    # tests/.htaccess qui bloquent la lecture publique de ces dossiers. Ces deux
+    # fichiers-la doivent bien etre deployes.
+    - /usr/bin/rsync -rv --exclude=.git --exclude=.cpanel.yml --exclude=/.htaccess ./ $DEPLOYPATH

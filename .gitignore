@@ -8,6 +8,9 @@ database/*
 !database/lot-5-objectives-notifications.sql
 !database/lot-6-goal-planning.sql
 !database/lot-7-daily-goal-reminder.sql
+!database/lot-8-app-auth.sql
+# Bloque la lecture publique de database/ une fois le Basic Auth retire (lot 8).
+!database/.htaccess
 
 # Config outil local
 .claude/
@@ -16,6 +19,7 @@ database/*
 node_modules/
 test-results/
 playwright-report/
+tests/.auth-state.json
 .codex-browser/
 
 # Dépendances Composer installées au déploiement

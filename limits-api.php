@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
+require __DIR__ . '/auth.php';
+budgetRequireAuthApi();
 
 function limitsFail(string $message, int $status = 422): never
 {

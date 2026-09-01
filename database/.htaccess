@@ -1,0 +1,10 @@
+# Ce dossier ne doit jamais etre lisible depuis le web. Il est deploye avec le code
+# mais ne contient rien qu'un visiteur ait a consulter : scripts de migration pour
+# database/, suite de tests pour tests/.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

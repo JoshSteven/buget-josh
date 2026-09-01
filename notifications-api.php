@@ -2,6 +2,8 @@
 declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
+require __DIR__ . '/auth.php';
+budgetRequireAuthApi();
 require_once __DIR__ . '/goal-reminder-service.php';
 
 function notificationFail(string $message, int $status = 422): never
