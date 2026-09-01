@@ -24,6 +24,9 @@
 
 - Données de production personnelles : sauvegarde SQL avant toute migration.
 - Ne jamais versionner `config.php`, `.env`, `notification-secrets.php` ou une clé privée.
+- **Toute nouvelle page ou API doit appeler `budgetRequireAuthPage()` ou `budgetRequireAuthApi()`** (`auth.php`). Depuis le lot 8 il n’y a plus de Basic Auth : cette garde est la seule protection des données financières.
+- **Le `.htaccess` de la racine n’est pas versionné** (exclu du rsync, `--exclude=/.htaccess`). Il contient `DirectoryIndex index.php`, `Options -Indexes`, le blocage de `/vendor/` et celui des manifestes de dépendances. S’il est perdu ou réécrit par cPanel, ces protections disparaissent **sans erreur visible** — le vérifier après toute manipulation de « Confidentialité du répertoire ».
+- Toute nouvelle migration doit être ajoutée aux exceptions `!database/...` de `.gitignore`, sinon elle n’est jamais versionnée.
 - `nature` reste facultative et n’est jamais associée automatiquement à un bucket.
 - Les dépenses annulées sont exclues des totaux.
 - Les liaisons ciblent `goal_tasks` et utilisent `ON DELETE SET NULL`.

@@ -14,6 +14,23 @@ Dernière mise à jour : 31 août 2026. Remplace `PROJECT_MEMORY.md` (V1) comme 
 - Le Cron marque désormais chaque rappel seulement si au moins un appareil l’a réellement reçu et nettoie les abonnements expirés.
 - Validation locale du lot : syntaxe PHP/JS, migration répétée, tests API, quatre tailles mobiles, accessibilité Axe, suite Playwright complète et audits de dépendances. Un vrai téléphone abonné reste nécessaire pour prouver la réception Push hors navigateur automatisé.
 
+## Lot 8 — Authentification applicative, déployée le 1er septembre 2026
+
+Le Basic Auth cPanel est **retiré**. L’accès repose désormais sur `auth.php` : mot de passe unique (`password_hash`), session de 90 jours dont le jeton n’est stocké qu’en SHA-256, cookie `httpOnly`/`Secure`/`SameSite=Lax`, verrouillage à 8 tentatives par IP sur 15 minutes, échec fermé si la base est indisponible. Le mot de passe se pose avec `php set-password.php` (CLI uniquement, 404 en HTTP) et n’a jamais transité par une page, un fichier ou Git.
+
+Bénéfice collatéral : `manifest.webmanifest` répond enfin 200 (il renvoyait 401 sous Basic Auth), donc la PWA s’installe proprement.
+
+Pièges rencontrés, tous vérifiés après coup en production :
+
+- **Le `--dry-run` du Cron ne prouvait rien.** `cron-goal-reminders.php` sort ligne 27 alors que `vendor/autoload.php` n’est chargé qu’en ligne 38 : le mode test n’atteint jamais le chemin d’envoi réel. Toute vérification du Push doit se faire **sans** `--dry-run`.
+- **Le listing de répertoires était actif** sur l’hébergement : `/vendor/` exposait toute l’arborescence et `vendor/composer/installed.json` (46 Ko) donnait la version exacte de chaque bibliothèque. Fermé par `Options -Indexes` + `RedirectMatch 403 ^/vendor/` dans le `.htaccess` racine.
+- **`--exclude=.htaccess` sans barre oblique** excluait tout fichier `.htaccess` à n’importe quelle profondeur : `database/.htaccess` et `tests/.htaccess` n’auraient jamais été déployés. L’exclusion est désormais ancrée (`--exclude=/.htaccess`).
+- **LiteSpeed Cache** tourne sur l’hébergement et aucun en-tête de cache n’était envoyé. `budgetNoStore()` pose maintenant `Cache-Control: private, no-store` et `X-LiteSpeed-Cache-Control: no-cache` sur toutes les réponses authentifiées.
+
+Balayage final en production, sans session : les 5 pages renvoient 302 vers `login.php`, les 8 endpoints renvoient 401, `.git/`, `.cpanel.yml`, `database/`, `tests/`, `vendor/`, `composer.json` et `package.json` renvoient 403, `set-password.php` et `cron-goal-reminders.php` renvoient 404 (garde CLI), `config.php` et `notification-secrets.php` renvoient 200 avec un corps vide (exécutés par PHP, aucune fuite de source). Les assets de la PWA et `assets/vendor/` restent servis.
+
+Tests : `globalSetup` Playwright ouvre une session avant la suite, sinon tout part en redirection. 33/33 passent.
+
 ## Mise à jour du 31 août 2026 (soirée) — déploiement rattrapé, Push vérifié, lot 7
 
 - **Déploiement de production débloqué** : le dépôt GitHub était passé en privé sans que le remote Git cPanel (URL HTTPS sans jeton) ne puisse plus s'authentifier — la prod était restée figée sur le commit du 9 août pendant 3 semaines. Dépôt repassé en public, `Update from Remote` + `Deploy HEAD Commit` rejoués : prod à jour.
