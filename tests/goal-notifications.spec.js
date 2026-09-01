@@ -21,9 +21,10 @@ test('le centre affiche le rappel J-1 et la configuration push', async ({ page, 
   await expect(page.locator('#notificationBadge')).not.toBeHidden();
   await page.getByRole('button', { name: 'Ouvrir les rappels' }).click();
   const dialog = page.getByRole('dialog', { name: 'Rappels d’objectifs' });
-  // On cible le rappel de CETTE tâche : la base de développement contient de vraies
-  // données, et une autre échéance au lendemain produirait un second « Échéance demain ».
-  const notice = dialog.getByRole('article').filter({ hasText: 'AUDIT Échéance demain' });
+  // On cible le corps propre au rappel J-1. Filtrer sur le seul titre de la tâche ne
+  // suffit pas : le rappel quotidien (lot 7) cite lui aussi ce titre, et la base de
+  // développement contient de vraies données pouvant échoir le même jour.
+  const notice = dialog.getByRole('article').filter({ hasText: /AUDIT Échéance demain.*1 jour restant/ });
   await expect(notice).toHaveCount(1);
   await expect(notice.getByText('Échéance demain', { exact: true })).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Activer les notifications' })).toBeVisible();

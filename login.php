@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/auth.php';
+budgetNoStore();
 
 // Déjà connecté : on ne montre pas l'écran de connexion.
 if (budgetSessionIsValid()) {

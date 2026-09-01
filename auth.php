@@ -179,9 +179,24 @@ function budgetAttemptLogin(string $password): bool
     return true;
 }
 
+/**
+ * Interdit toute mise en cache partagée d'une réponse authentifiée.
+ * Indispensable ici : l'hébergement fait tourner LiteSpeed Cache, et sans cette
+ * consigne une page contenant les données financières pourrait être resservie à un
+ * visiteur anonyme une fois le Basic Auth retiré.
+ */
+function budgetNoStore(): void
+{
+    if (headers_sent()) return;
+    header('Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('X-LiteSpeed-Cache-Control: no-cache');
+}
+
 /** Garde pour une page HTML : redirige vers l'écran de connexion. */
 function budgetRequireAuthPage(): void
 {
+    budgetNoStore();
     if (budgetSessionIsValid()) return;
     $next = (string) ($_SERVER['REQUEST_URI'] ?? '/index.php');
     header('Location: login.php?next=' . rawurlencode($next), true, 302);
@@ -191,6 +206,7 @@ function budgetRequireAuthPage(): void
 /** Garde pour un endpoint JSON : 401 exploitable par le front. */
 function budgetRequireAuthApi(): void
 {
+    budgetNoStore();
     if (budgetSessionIsValid()) return;
     http_response_code(401);
     header('Content-Type: application/json; charset=utf-8');
