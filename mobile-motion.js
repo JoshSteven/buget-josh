@@ -23,6 +23,7 @@
     .app-nav-label-short{display:none}
     .app-nav-button[aria-current="page"]{background:#123b35;color:#fff!important;border-color:#123b35;box-shadow:0 8px 20px #123b3524}
     .app-nav-button:active{transform:scale(.97)}
+    .brand-logo{display:block;width:62px;height:62px;object-fit:cover;border-radius:18px;margin:0 0 12px;box-shadow:0 8px 20px #123b3518}
     @media(max-width:699px){
       body.has-mobile-app-nav{padding-bottom:calc(92px + env(safe-area-inset-bottom))!important}
       .app-nav{position:fixed!important;z-index:75;left:0;right:0;bottom:0;margin:0!important;gap:2px!important;padding:7px 6px calc(7px + env(safe-area-inset-bottom))!important;border-top:1px solid #dce5de;background:#fffdf9f5;box-shadow:0 -12px 30px #123b3518;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
@@ -56,9 +57,21 @@
     });
   });
 
+  const addBrandLogo = () => document.querySelectorAll('header').forEach(header => {
+    if (header.querySelector('.brand-logo')) return;
+    const logo = document.createElement('img');
+    logo.className = 'brand-logo';
+    logo.src = 'assets/logo-budget-josh.png';
+    logo.alt = 'Budget Josh';
+    logo.width = 62;
+    logo.height = 62;
+    header.prepend(logo);
+  });
+
   let lenis;
   const refresh = () => {
     enhanceNav();
+    addBrandLogo();
     if (reduced || !window.gsap) return;
     gsap.fromTo('.card,.metric,.goal-card,.expense', { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: .42, stagger: .035, ease: 'power2.out', overwrite: 'auto' });
   };
