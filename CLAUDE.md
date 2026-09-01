@@ -43,6 +43,10 @@
 
 ## Préférences de collaboration
 
-- Expliquer brièvement la couche concernée, l’outil utilisé et la preuve obtenue pendant le développement.
+- Expliquer brièvement la couche concernée, l'outil utilisé et la preuve obtenue pendant le développement.
 - Préférer les schémas, illustrations et parcours visuels aux longs blocs de texte.
+- Mode coaching demandé : avant de coder, faire une mini-revue du besoin, du flux et de l’architecture ; signaler explicitement les incohérences, risques, dépendances et fonctionnalités manquantes.
+- Pendant l’implémentation, expliquer le pourquoi des choix backend/frontend et distinguer clairement correction nécessaire, amélioration optionnelle et changement de périmètre.
+- À chaque étape importante, présenter les constats et demander une décision lorsque plusieurs solutions modifient le produit ou les données ; ne pas exécuter silencieusement une extension substantielle.
+- Après le code, proposer les tests adaptés, vérifier le flux complet et expliquer ce qui reste impossible à prouver localement (appareil réel, production, permissions externes).
 - Tester, mettre à jour la mémoire, commit et push à la fin d’un lot validé.

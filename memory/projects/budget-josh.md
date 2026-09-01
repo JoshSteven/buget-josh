@@ -1,5 +1,16 @@
 # Budget Josh
 
+## Mode de collaboration demandé
+
+Le propriétaire est chef de projet digital et apprend progressivement l’architecture web. Il souhaite un accompagnement pédagogique, pas une exécution opaque :
+
+- commencer chaque lot par une revue courte du besoin, du flux utilisateur et des couches concernées ;
+- relever les logiques manquantes, incohérences UX, risques de données, dépendances et cas limites avant de modifier ;
+- séparer les corrections indispensables des améliorations facultatives et des extensions de périmètre ;
+- expliquer simplement les actions backend, frontend, base de données, tests et déploiement ;
+- demander confirmation avant une décision qui change le produit, le schéma ou les données ;
+- terminer par une preuve (tests, audit ou vérification visuelle) et les limites restantes.
+
 ## Vision
 
 Application personnelle qui remplace le tableur de Josh et relie budgets, analyse financière et planification d’objectifs dans une PWA mobile en français.
