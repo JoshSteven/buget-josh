@@ -82,11 +82,9 @@
     }
   }
 
-  async function testPush() {
-    const status = $('#pushStatus');
-    const button = $('#testPush');
+  async function runPushTest(button, report) {
     button.disabled = true;
-    status.textContent = 'Envoi du test…';
+    report('Envoi du test…');
     try {
       const supportMessage = pushSupportMessage();
       if (supportMessage) throw Error(supportMessage);
@@ -94,12 +92,27 @@
       const subscription = await registration.pushManager.getSubscription();
       if (!subscription) throw Error('Activez d’abord les notifications sur cet appareil.');
       await api('test', { endpoint: subscription.endpoint });
-      status.textContent = 'Test envoyé. La notification doit apparaître dans quelques secondes.';
+      report('Test envoyé. La notification doit apparaître dans quelques secondes.');
     } catch (error) {
-      status.textContent = error.message;
+      report(error.message);
     } finally {
       button.disabled = false;
     }
+  }
+
+  function testPush() {
+    return runPushTest($('#testPush'), message => { $('#pushStatus').textContent = message; });
+  }
+
+  let quickStatusTimer;
+  function quickTest() {
+    const status = $('#quickStatus');
+    return runPushTest($('#quickTestPush'), message => {
+      status.textContent = message;
+      status.classList.add('show');
+      clearTimeout(quickStatusTimer);
+      quickStatusTimer = setTimeout(() => status.classList.remove('show'), 4500);
+    });
   }
 
   $('#openNotifications').onclick = () => {
@@ -110,5 +123,6 @@
   };
   $('#enablePush').onclick = enable;
   $('#testPush').onclick = testPush;
+  $('#quickTestPush').onclick = quickTest;
   load();
 })();
