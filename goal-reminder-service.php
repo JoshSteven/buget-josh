@@ -9,11 +9,15 @@ function goalUuid(): string
     return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
 }
 
+// Le rappel 'weekly' (un message « où en êtes-vous » par tâche, chaque lundi) a été
+// retiré : le rappel 'daily' du lot 7 porte exactement le même texte et sort tous les
+// jours, ce qui produisait deux notifications identiques chaque lundi sur la tâche la
+// plus proche. 'weekly' reste dans l'enum pour les lignes déjà en base.
+// j7 et j1 sont conservés : ils sont datés, spécifiques à une tâche, et non redondants.
 function goalReminderType(int $daysRemaining, DateTimeImmutable $today): ?string
 {
     if ($daysRemaining === 7) return 'j7';
     if ($daysRemaining === 1) return 'j1';
-    if ($daysRemaining > 7 && (int) $today->format('N') === 1) return 'weekly';
     return null;
 }
 
