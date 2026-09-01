@@ -1,5 +1,5 @@
-const CACHE='budget-josh-shell-v10';
-const SHELL=['./','index.php','session-guard.js','app-v6.js','draft-flow.js','goals-link.js','offline-sync.js','mobile-motion.js','objectives.php','objectives-v2.php','objectives-v2.js','goal-notifications.js','assets/vendor/gsap.min.js','assets/vendor/lenis.min.js','assets/vendor/lenis.css','uuid-polyfill.js','icon-192.png','icon-512.png','manifest.webmanifest'];
+const CACHE='budget-josh-shell-v11';
+const SHELL=['./','index.php','session-guard.js','app-v6.js','draft-flow.js','goals-link.js','offline-sync.js','mobile-motion.js','objectives.php','objectives-v2.php','objectives-v2.js','goal-notifications.js','assets/vendor/gsap.min.js','assets/vendor/lenis.min.js','assets/vendor/lenis.css','uuid-polyfill.js','icon-192.png','icon-512.png','icon-maskable-192.png','icon-maskable-512.png','manifest.webmanifest'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>Promise.allSettled(SHELL.map(asset=>cache.add(asset)))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});
 // On ne met en cache que les reponses vraiment utiles : depuis le lot 8, une page
