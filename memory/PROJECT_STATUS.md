@@ -56,6 +56,15 @@ Pour les autres projets où le remote cPanel est configuré en SSH, utiliser le 
 - Preuves : 34/34 tests Playwright, lint PHP/JavaScript et `git diff --check` validés.
 - État livraison : commit local prêt à pousser ; cPanel n'a pas encore été synchronisé ni déployé.
 
+## Déploiement lot 9 — réalisé le 2 septembre 2026
+
+- GitHub poussé jusqu'au commit `cdecd02`, puis `Update from Remote` et `Deploy HEAD Commit` exécutés dans cPanel.
+- SHA cPanel confirmé : `cdecd021a01b8cc09aa75e73657ecb4910bdb10d`.
+- Migration `lot-9-recurring-expenses.sql` appliquée en production depuis le terminal cPanel ; résultat `MIGRATION_OK`.
+- Cron ajouté : `php -q /home/sc1tijo0515/depensesjosh.brightlightmind.online/cron-recurring-expenses.php`, tous les jours à 20h heure serveur, en complément du Cron des rappels d'objectifs.
+- Test production du Cron en `--dry-run` : `models_due: 0`, `occurrences: 0`, `created: 0`, sans erreur.
+- Smoke test de l'application : la page production répond et redirige correctement vers `login.php` lorsqu'aucune session n'est ouverte.
+
 ## Prochain chantier connu
 
 Le lot Pilotage reste le prochain chantier fonctionnel prioritaire : disponible réel vs engagé, répartition et alertes de limite par catégorie. Les notifications Push et les Cron restent à revalider après le prochain déploiement réel.

@@ -46,3 +46,7 @@ Le workflow quotidien est documenté dans `memory/PROJECT_STATUS.md` : revue ava
 Le commit `6f2b563` ajoute les dépenses récurrentes mensuelles (API protégée, migration SQL idempotente et script CLI), l'export CSV compatible Excel de toutes les dépenses par budget, et la finition UX mobile/Objectifs avec icônes SVG. Les tests Playwright passent à 34/34 et les vérifications de syntaxe PHP/JavaScript sont propres. La base locale a été sauvegardée avant migration et le Cron récurrent a été testé en simulation puis en génération contrôlée, sans données de test conservées.
 
 Le commit est prêt à être poussé sur `origin/master`. Après push, synchroniser cPanel avec `Update from Remote`, puis `Deploy HEAD Commit`. La migration lot 9 et le Cron de production doivent être exécutés après le déploiement, avec la sauvegarde de production déjà réalisée par l'utilisateur. Ne jamais considérer ce commit comme déployé avant vérification du SHA affiché par cPanel et un smoke test de production.
+
+### Déploiement confirmé
+
+Le 2 septembre 2026, `cdecd02` a été poussé sur GitHub et déployé par cPanel. Le SHA affiché par cPanel est `cdecd021a01b8cc09aa75e73657ecb4910bdb10d`. La migration lot 9 a été appliquée avec succès (`MIGRATION_OK`) et le Cron des dépenses récurrentes a été ajouté à 20h heure serveur. Son `--dry-run` de production répond sans erreur et ne trouve actuellement aucune occurrence due.

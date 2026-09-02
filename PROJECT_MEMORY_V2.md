@@ -8,6 +8,7 @@ Dernière mise à jour : 2 septembre 2026. Remplace `PROJECT_MEMORY.md` (V1) com
 - Validation : 34/34 tests Playwright, lint PHP/JavaScript et diff propres.
 - Migration locale appliquée après sauvegarde ; production sauvegardée mais migration lot 9 encore à exécuter après déploiement.
 - Le commit n'est pas encore poussé ni déployé ; cPanel doit afficher ce SHA après `Update from Remote` puis `Deploy HEAD Commit`.
+- Déploiement ensuite réalisé : GitHub et cPanel sont à `cdecd021a01b8cc09aa75e73657ecb4910bdb10d`; migration lot 9 appliquée (`MIGRATION_OK`) et Cron récurrent ajouté à 20h heure serveur. Le `--dry-run` production est propre avec zéro occurrence due.
 
 ## État actuel — 31 août 2026 (référence prioritaire)
 
