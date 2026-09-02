@@ -9,6 +9,7 @@
 | Production | o2switch/cPanel — `https://depensesjosh.brightlightmind.online` |
 | Stack | PHP 8.3, MySQL, JavaScript/CSS natifs, Composer, npm/Playwright |
 | Mémoire détaillée | `PROJECT_MEMORY_V2.md` et `memory/projects/budget-josh.md` |
+| État et onboarding | `memory/PROJECT_STATUS.md` |
 
 ## Navigation validée
 
@@ -50,3 +51,5 @@
 - À chaque étape importante, présenter les constats et demander une décision lorsque plusieurs solutions modifient le produit ou les données ; ne pas exécuter silencieusement une extension substantielle.
 - Après le code, proposer les tests adaptés, vérifier le flux complet et expliquer ce qui reste impossible à prouver localement (appareil réel, production, permissions externes).
 - Tester, mettre à jour la mémoire, commit et push à la fin d’un lot validé.
+- Workflow Git : `status`/diff → tests → commit cohérent → push après validation ; ne jamais mélanger les fichiers staged d’un autre intervenant.
+- Déploiement : pour Budget Josh, GitHub → cPanel Git Version Control (`Update from Remote` puis `Deploy HEAD Commit`) ; pour les autres projets, SSH selon le remote configuré.

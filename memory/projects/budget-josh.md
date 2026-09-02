@@ -38,3 +38,5 @@ Le centre interne matérialise les rappels hebdomadaires, J−7, J−1, et déso
 ## Déploiement
 
 Toujours exporter la base de production avant la migration. Appliquer les migrations dans l’ordre, installer les dépendances Composer, déployer les fichiers, configurer VAPID hors Git, puis exécuter le Cron en `--dry-run`. Vérifier ensuite un vrai abonnement et un vrai Push depuis un téléphone.
+
+Le workflow quotidien est documenté dans `memory/PROJECT_STATUS.md` : revue avant code, lot cohérent, tests/audit, diff relu, commit puis push. Pour Budget Josh, le déploiement passe par GitHub puis cPanel Git Version Control (`Update from Remote`, puis `Deploy HEAD Commit`). Les projets dont le cPanel est configuré en SSH suivent le remote SSH, après vérification de la cible.
