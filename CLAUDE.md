@@ -51,5 +51,5 @@
 - À chaque étape importante, présenter les constats et demander une décision lorsque plusieurs solutions modifient le produit ou les données ; ne pas exécuter silencieusement une extension substantielle.
 - Après le code, proposer les tests adaptés, vérifier le flux complet et expliquer ce qui reste impossible à prouver localement (appareil réel, production, permissions externes).
 - Tester, mettre à jour la mémoire, commit et push à la fin d’un lot validé.
-- Workflow Git : `status`/diff → tests → commit cohérent → push après validation ; ne jamais mélanger les fichiers staged d’un autre intervenant.
+- Workflow Git préféré : terminer le lot → vérifier rapidement le diff et les tests → commit cohérent → push → pull si nécessaire pour resynchroniser/valider l’état distant. Le `pull` n’est pas une étape obligatoire avant de commencer ; le statut Git sert surtout de garde-fou léger. Ne jamais mélanger les fichiers staged d’un autre intervenant.
 - Déploiement : pour Budget Josh, GitHub → cPanel Git Version Control (`Update from Remote` puis `Deploy HEAD Commit`) ; pour les autres projets, SSH selon le remote configuré.

@@ -11,12 +11,14 @@ Le dépôt local est `D:\laragon\www\buget-josh`. Le dépôt GitHub est `JoshSte
 ## Workflow Git de référence
 
 1. Lire `CLAUDE.md`, cette fiche, puis `memory/projects/budget-josh.md` avant d’intervenir.
-2. Vérifier `git status`, la branche et les derniers commits ; ne jamais écraser les modifications d’un autre intervenant.
-3. Faire une revue du besoin et du flux avant le code : logique manquante, données touchées, risques, dépendances et critères d’acceptation.
-4. Travailler par lot cohérent, avec des commits petits et descriptifs.
-5. Vérifier proportionnellement au risque : syntaxe PHP/JS, tests Playwright, API, responsive et accessibilité.
-6. Relire le diff (`git diff --check`), confirmer que seuls les fichiers du lot sont staged, puis `git commit`.
-7. Après validation, `git push origin master` et noter le commit dans la mémoire.
+2. Faire une revue du besoin et du flux avant le code : logique manquante, données touchées, risques, dépendances et critères d’acceptation.
+3. Travailler par lot cohérent, avec des commits petits et descriptifs.
+4. Vérifier proportionnellement au risque : syntaxe PHP/JS, tests Playwright, API, responsive et accessibilité.
+5. En fin de lot, relire le diff (`git diff --check`), confirmer que seuls les fichiers du lot sont staged, puis `git commit`.
+6. Après validation, `git push origin master`, puis `git pull` seulement lorsque cela sert à resynchroniser ou contrôler l’état distant ; ce n’est pas une obligation avant de commencer.
+7. Noter le commit et les résultats dans la mémoire.
+
+Ce séquencement décrit le flow de livraison souhaité : on avance, on termine, on commit et on pousse. Les vérifications de statut et de branche restent utiles comme garde-fous, mais ne doivent pas alourdir inutilement chaque intervention.
 
 Le push n’est pas une preuve de qualité : la preuve est le couple **tests/audit + diff relu**. Tout changement de schéma ou de données de production exige une sauvegarde SQL avant migration.
 
