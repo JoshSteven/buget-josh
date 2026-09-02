@@ -70,7 +70,7 @@ Pour les autres projets où le remote cPanel est configuré en SSH, utiliser le 
 - Le bouton Budgets génère désormais un fichier `.xls` compatible Excel, avec titre, date d'export, en-têtes colorés, alternance des lignes, colonnes par budget et ligne de totaux.
 - Le format conserve les montants comme valeurs numériques afin de faciliter les tris et calculs dans Excel.
 - Test de téléchargement validé ; commit local `13bab6e` (`Remplacer l export CSV par Excel mis en forme`).
-- Ce correctif n'est pas encore poussé ni redéployé en production.
+- Ce correctif a été poussé et déployé en production le 2 septembre 2026 ; cPanel confirme le SHA `c3f96fcaaceaee0e15400996a4a735376e47e44c`.
 
 ## Prochain chantier connu
 
