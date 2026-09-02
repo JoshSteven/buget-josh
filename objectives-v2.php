@@ -15,6 +15,7 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
 .drawer-progress>span:last-child small,.drawer-progress>span:last-child strong{display:block}.drawer-progress>span:last-child small{color:var(--muted);margin-bottom:4px}.drawer-progress>span:last-child strong{line-height:1.3}
 .push-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.push-actions .secondary{background:var(--card);color:var(--ink);border:1px solid var(--line)}@media(max-width:380px){.push-actions{grid-template-columns:1fr}}
 @media(max-width:600px){.goal-next strong{white-space:normal;overflow-wrap:anywhere}}
+.goal-time{margin-right:48px}@media(max-width:350px){.goal-time{margin-right:0}}
 </style>
 <link rel="stylesheet" href="assets/vendor/lenis.css?v=<?= $v('assets/vendor/lenis.css') ?>">
 </head>
