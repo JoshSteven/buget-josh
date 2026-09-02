@@ -1,6 +1,13 @@
 # Mémoire projet — Dépenses Josh (V2)
 
-Dernière mise à jour : 31 août 2026. Remplace `PROJECT_MEMORY.md` (V1) comme référence active — la V1 reste disponible pour l'historique détaillé (diagnostics, journal pas-à-pas des correctifs), mais **c'est cette V2 qui doit guider le travail à partir de maintenant.**
+Dernière mise à jour : 2 septembre 2026. Remplace `PROJECT_MEMORY.md` (V1) comme référence active — la V1 reste disponible pour l'historique détaillé (diagnostics, journal pas-à-pas des correctifs), mais **c'est cette V2 qui doit guider le travail à partir de maintenant.**
+
+## État courant — lot 9
+
+- Commit local validé : `6f2b563` — récurrences mensuelles, export CSV compatible Excel, UX mobile et icônes SVG.
+- Validation : 34/34 tests Playwright, lint PHP/JavaScript et diff propres.
+- Migration locale appliquée après sauvegarde ; production sauvegardée mais migration lot 9 encore à exécuter après déploiement.
+- Le commit n'est pas encore poussé ni déployé ; cPanel doit afficher ce SHA après `Update from Remote` puis `Deploy HEAD Commit`.
 
 ## État actuel — 31 août 2026 (référence prioritaire)
 

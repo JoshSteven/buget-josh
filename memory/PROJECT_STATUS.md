@@ -46,6 +46,16 @@ Pour les autres projets où le remote cPanel est configuré en SSH, utiliser le 
 - La navigation mobile est une barre inférieure fixe à quatre destinations ; sur ordinateur elle reste horizontale.
 - Les icônes PWA et le logo portefeuille `$`/flèche/JOSH ont été actualisés.
 
+## Lot 9 — récurrence, export et UX mobile
+
+- Commit local validé : `6f2b563` (`Ajouter recurrence et ameliorer UX mobile`).
+- Dépenses récurrentes mensuelles : création, pause, suppression et génération CLI via `cron-recurring-expenses.php`.
+- Migration versionnée : `database/lot-9-recurring-expenses.sql`, appliquée et testée localement après sauvegarde.
+- Export structuré CSV compatible Excel : toutes les dépenses, avec une colonne par budget.
+- UX : aucun budget ouvert automatiquement, sélection explicite, icônes SVG cohérentes pour Objectifs et contrôles mobiles renforcés.
+- Preuves : 34/34 tests Playwright, lint PHP/JavaScript et `git diff --check` validés.
+- État livraison : commit local prêt à pousser ; cPanel n'a pas encore été synchronisé ni déployé.
+
 ## Prochain chantier connu
 
-Le lot Pilotage reste le prochain chantier fonctionnel prioritaire : disponible réel vs engagé, répartition et alertes de limite par catégorie. Avant de commencer, faire la revue du modèle de données et des règles de calcul.
+Le lot Pilotage reste le prochain chantier fonctionnel prioritaire : disponible réel vs engagé, répartition et alertes de limite par catégorie. Les notifications Push et les Cron restent à revalider après le prochain déploiement réel.
