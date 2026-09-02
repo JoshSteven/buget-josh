@@ -41,6 +41,8 @@ Toujours exporter la base de production avant la migration. Appliquer les migrat
 
 Le workflow quotidien est documenté dans `memory/PROJECT_STATUS.md` : revue avant code, lot cohérent, tests/audit, diff relu, commit puis push. Le `pull` intervient ensuite seulement si nécessaire pour resynchroniser ou contrôler l’état distant ; il n’est pas imposé avant chaque tâche. Pour Budget Josh, le déploiement passe par GitHub puis cPanel Git Version Control (`Update from Remote`, puis `Deploy HEAD Commit`). Les projets dont le cPanel est configuré en SSH suivent le remote SSH, après vérification de la cible.
 
+Règle obligatoire de clôture : après chaque lot, mettre à jour cette mémoire et `memory/PROJECT_STATUS.md`, puis commiter cette mise à jour. Le push peut être différé si demandé, mais la mémoire et son commit local ne doivent pas être oubliés.
+
 ## État au 2 septembre 2026 — lot 9 validé localement
 
 Le commit `6f2b563` ajoute les dépenses récurrentes mensuelles (API protégée, migration SQL idempotente et script CLI), l'export CSV compatible Excel de toutes les dépenses par budget, et la finition UX mobile/Objectifs avec icônes SVG. Les tests Playwright passent à 34/34 et les vérifications de syntaxe PHP/JavaScript sont propres. La base locale a été sauvegardée avant migration et le Cron récurrent a été testé en simulation puis en génération contrôlée, sans données de test conservées.

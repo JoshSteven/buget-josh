@@ -18,6 +18,8 @@ Le dépôt local est `D:\laragon\www\buget-josh`. Le dépôt GitHub est `JoshSte
 6. Après validation, `git push origin master`, puis `git pull` seulement lorsque cela sert à resynchroniser ou contrôler l’état distant ; ce n’est pas une obligation avant de commencer.
 7. Noter le commit et les résultats dans la mémoire.
 
+**Règle systématique demandée par l'utilisateur : chaque lot terminé doit mettre à jour la mémoire du projet avant de clôturer le travail. Cette mise à jour doit elle-même être commitée, même si le push ou le déploiement est différé.**
+
 Ce séquencement décrit le flow de livraison souhaité : on avance, on termine, on commit et on pousse. Les vérifications de statut et de branche restent utiles comme garde-fous, mais ne doivent pas alourdir inutilement chaque intervention.
 
 Le push n’est pas une preuve de qualité : la preuve est le couple **tests/audit + diff relu**. Tout changement de schéma ou de données de production exige une sauvegarde SQL avant migration.

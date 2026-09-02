@@ -10,6 +10,7 @@ Dernière mise à jour : 2 septembre 2026. Remplace `PROJECT_MEMORY.md` (V1) com
 - Le commit n'est pas encore poussé ni déployé ; cPanel doit afficher ce SHA après `Update from Remote` puis `Deploy HEAD Commit`.
 - Déploiement ensuite réalisé : GitHub et cPanel sont à `cdecd021a01b8cc09aa75e73657ecb4910bdb10d`; migration lot 9 appliquée (`MIGRATION_OK`) et Cron récurrent ajouté à 20h heure serveur. Le `--dry-run` production est propre avec zéro occurrence due.
 - Export amélioré dans le commit `13bab6e` : fichier `.xls` compatible Excel, présentation structurée et totaux par budget ; test de téléchargement validé. Inclus dans le déploiement cPanel confirmé sur `c3f96fcaacea...e44c`.
+- Règle de collaboration permanente : à la fin de chaque lot, mettre à jour la mémoire du projet et commiter cette mise à jour avant de clôturer ; le push peut être différé.
 
 ## État actuel — 31 août 2026 (référence prioritaire)
 
