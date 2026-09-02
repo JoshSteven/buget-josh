@@ -65,6 +65,13 @@ Pour les autres projets où le remote cPanel est configuré en SSH, utiliser le 
 - Test production du Cron en `--dry-run` : `models_due: 0`, `occurrences: 0`, `created: 0`, sans erreur.
 - Smoke test de l'application : la page production répond et redirige correctement vers `login.php` lorsqu'aucune session n'est ouverte.
 
+## Export Excel — validé localement le 2 septembre 2026
+
+- Le bouton Budgets génère désormais un fichier `.xls` compatible Excel, avec titre, date d'export, en-têtes colorés, alternance des lignes, colonnes par budget et ligne de totaux.
+- Le format conserve les montants comme valeurs numériques afin de faciliter les tris et calculs dans Excel.
+- Test de téléchargement validé ; commit local `13bab6e` (`Remplacer l export CSV par Excel mis en forme`).
+- Ce correctif n'est pas encore poussé ni redéployé en production.
+
 ## Prochain chantier connu
 
 Le lot Pilotage reste le prochain chantier fonctionnel prioritaire : disponible réel vs engagé, répartition et alertes de limite par catégorie. Les notifications Push et les Cron restent à revalider après le prochain déploiement réel.

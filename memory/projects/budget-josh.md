@@ -50,3 +50,5 @@ Le commit est prêt à être poussé sur `origin/master`. Après push, synchroni
 ### Déploiement confirmé
 
 Le 2 septembre 2026, `cdecd02` a été poussé sur GitHub et déployé par cPanel. Le SHA affiché par cPanel est `cdecd021a01b8cc09aa75e73657ecb4910bdb10d`. La migration lot 9 a été appliquée avec succès (`MIGRATION_OK`) et le Cron des dépenses récurrentes a été ajouté à 20h heure serveur. Son `--dry-run` de production répond sans erreur et ne trouve actuellement aucune occurrence due.
+
+Le 2 septembre 2026, l'export CSV a été remplacé localement par un fichier `.xls` compatible Excel et mis en forme : titre, date, colonnes par budget, montants numériques et totaux. Le test de téléchargement passe ; commit `13bab6e`. Push et déploiement restent différés.
