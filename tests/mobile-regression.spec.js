@@ -5,6 +5,7 @@ test('navigation mobile, animations et menu contextuel', async ({ page }) => {
   await expect(page.locator('.app-nav a')).toHaveCount(4);
   expect(await page.locator('.app-nav a').first().evaluate(el => parseFloat(getComputedStyle(el).minHeight))).toBeGreaterThanOrEqual(48);
   expect(await page.evaluate(() => [typeof window.gsap, typeof window.Lenis])).toEqual(['object', 'function']);
+  await page.locator('[data-budget-select]').first().click();
   await expect(page.getByRole('button', { name: 'Plus d’actions' }).first()).toBeVisible();
   await expect(page.getByText('Annuler', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Plus d’actions' }).first().click();

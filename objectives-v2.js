@@ -1,6 +1,6 @@
 (() => {
   const $ = selector => document.querySelector(selector);
-  const icons = { target: '🎯', car: '🚗', book: '🎓', home: '🏠', health: '💚', travel: '✈️', business: '💼', money: '💰', faith: '🙏', family: '👨‍👩‍👧' };
+  const icon = (name, size = 24) => window.BudgetIcons?.icon(name, size) || '';
   let state = { tracks: [], tasks: [] };
   let selectedTrackId = null;
   let initialHashHandled = false;
@@ -21,7 +21,7 @@
   const dateLabel = date => date
     ? new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${date}T12:00:00`))
     : 'Date à préciser';
-  const iconFor = track => icons[track.icon_key] || icons.target;
+  const iconFor = (track, size = 44) => icon(track.icon_key || 'target', size);
   const progressFor = tasks => tasks.length ? Math.round(tasks.filter(task => task.status === 'realised').length * 100 / tasks.length) : 0;
   const nextFor = tasks => tasks.find(task => task.status !== 'realised') || null;
 
@@ -45,9 +45,9 @@
     const urgent = planned.filter(task => Number(task.days_remaining) <= 7).length;
     const overall = progressFor(state.tasks);
     $('#summary').innerHTML = `
-      <article class="metric"><span class="metric-icon" aria-hidden="true">🎯</span><span><b>${active}</b><small>objectifs actifs</small></span></article>
-      <article class="metric"><span class="metric-icon" aria-hidden="true">⚡</span><span><b>${urgent}</b><small>étapes urgentes</small></span></article>
-      <article class="metric"><span class="metric-icon" aria-hidden="true">✓</span><span><b>${overall}%</b><small>progression totale</small></span></article>`;
+      <article class="metric"><span class="metric-icon" aria-hidden="true">${icon('target', 22)}</span><span><b>${active}</b><small>objectifs actifs</small></span></article>
+      <article class="metric"><span class="metric-icon" aria-hidden="true">${icon('bolt', 22)}</span><span><b>${urgent}</b><small>étapes urgentes</small></span></article>
+      <article class="metric"><span class="metric-icon" aria-hidden="true">${icon('check', 22)}</span><span><b>${overall}%</b><small>progression totale</small></span></article>`;
 
     $('#goals').innerHTML = state.tracks.length ? state.tracks.map(track => {
       const tasks = tasksFor(track.id);
@@ -61,7 +61,7 @@
           <span class="goal-art" aria-hidden="true">${iconFor(track)}</span>
           <span class="goal-copy">${track.category ? `<span class="goal-category">${esc(track.category)}</span>` : ''}<h2>${esc(track.title)}</h2><span class="goal-progress-label">${tasks.filter(task => task.status === 'realised').length} étape${tasks.filter(task => task.status === 'realised').length > 1 ? 's' : ''} sur ${tasks.length}</span><span class="progress" role="progressbar" aria-label="Progression" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100"><span style="width:${progress}%"></span></span></span>
           <span class="goal-time ${info?.className || ''}">${time}</span>
-          <span class="goal-next"><span class="goal-next-icon" aria-hidden="true">${progress === 100 && tasks.length ? '🏆' : '👣'}</span><span><small>${progress === 100 && tasks.length ? 'Parcours terminé' : 'Prochaine action'}</small><strong>${esc(nextLabel)}</strong></span></span>
+          <span class="goal-next"><span class="goal-next-icon" aria-hidden="true">${progress === 100 && tasks.length ? icon('trophy', 22) : icon('next', 22)}</span><span><small>${progress === 100 && tasks.length ? 'Parcours terminé' : 'Prochaine action'}</small><strong>${esc(nextLabel)}</strong></span></span>
         </button>${menu('track', track.id)}
       </article>`;
     }).join('') : '<p class="empty">Créez votre premier objectif pour dessiner son chemin.</p>';
@@ -112,16 +112,16 @@
     }).join('') : '<p class="empty">Le chemin est vide. Ajoutez une première étape simple.</p>';
 
     $('#drawerContent').innerHTML = `
-      <header class="drawer-head"><span class="drawer-art" aria-hidden="true">${iconFor(track)}</span><span><h2 id="drawerTitle">${esc(track.title)}</h2><small>${track.category ? esc(track.category) : 'Objectif personnel'}${finalDate ? ` · arrivée ${esc(dateLabel(finalDate))}` : ''}</small></span><button class="close" id="closeDrawer" type="button" aria-label="Fermer le plan">×</button></header>
+      <header class="drawer-head"><span class="drawer-art" aria-hidden="true">${iconFor(track, 38)}</span><span><h2 id="drawerTitle">${esc(track.title)}</h2><small>${track.category ? esc(track.category) : 'Objectif personnel'}${finalDate ? ` · arrivée ${esc(dateLabel(finalDate))}` : ''}</small></span><button class="close" id="closeDrawer" type="button" aria-label="Fermer le plan">×</button></header>
       <div class="drawer-body">
         <section class="drawer-progress" aria-label="Progression du parcours"><span class="progress-ring" style="--progress:${progress}" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100"><strong>${progress}%</strong></span><span><small>Votre parcours</small><strong>${next ? `Prochaine action : ${esc(next.title)}` : tasks.length ? 'Toutes les étapes sont terminées' : 'À construire'}</strong></span></section>
-        <section class="challenge"><span class="challenge-icon" aria-hidden="true">⚡</span><span><small>Le challenge de Josh</small><strong>${esc(challengeFor(track, tasks))}</strong></span></section>
-        <section class="plan-facts" aria-label="Repères du plan">${fact('🏆', 'Ma réussite', track.success_definition, 'Définir le résultat attendu')}${fact('🔥', 'Ma motivation', track.motivation, 'Dire pourquoi cela compte')}${fact('🧰', 'Mes moyens', track.resources, 'Lister temps, budget et soutiens')}${fact('🧱', 'Mes obstacles', track.obstacles, 'Anticiper ce qui peut bloquer')}</section>
+        <section class="challenge"><span class="challenge-icon" aria-hidden="true">${icon('bolt', 25)}</span><span><small>Le challenge de Josh</small><strong>${esc(challengeFor(track, tasks))}</strong></span></section>
+        <section class="plan-facts" aria-label="Repères du plan">${fact(icon('trophy', 22), 'Ma réussite', track.success_definition, 'Définir le résultat attendu')}${fact(icon('flame', 22), 'Ma motivation', track.motivation, 'Dire pourquoi cela compte')}${fact(icon('toolbox', 22), 'Mes moyens', track.resources, 'Lister temps, budget et soutiens')}${fact(icon('wall', 22), 'Mes obstacles', track.obstacles, 'Anticiper ce qui peut bloquer')}</section>
         <div class="journey-title"><h3>Mon chemin</h3><small>${tasks.length} étape${tasks.length > 1 ? 's' : ''}</small></div>
         <section class="journey" aria-label="Étapes de l’objectif">${journey}</section>
         <button class="add-step" type="button" data-drawer-add-task="${esc(track.id)}">＋ Ajouter une étape</button>
       </div>
-      <footer class="drawer-actions"><button type="button" data-drawer-edit-track="${esc(track.id)}">✎ Compléter mon plan</button><button class="primary" type="button" data-drawer-next="${esc(track.id)}">${next ? '👣 Voir ma prochaine action' : '＋ Ajouter une étape'}</button></footer>`;
+      <footer class="drawer-actions"><button type="button" data-drawer-edit-track="${esc(track.id)}">${icon('pencil', 18)} Compléter mon plan</button><button class="primary" type="button" data-drawer-next="${esc(track.id)}">${next ? `${icon('next', 18)} Voir ma prochaine action` : '＋ Ajouter une étape'}</button></footer>`;
     wireDrawer();
   }
 
@@ -282,5 +282,7 @@
     openDrawer(task.track_id);
     setTimeout(() => $(`#task-${CSS.escape(task.id)}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
   });
+  const toolbarIcon = document.querySelector('.toolbar-icon');
+  if (toolbarIcon) toolbarIcon.innerHTML = icon('bell', 20);
   load();
 })();

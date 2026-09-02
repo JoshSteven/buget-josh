@@ -4,6 +4,7 @@ for (const width of [360, 390]) {
   test(`menu budget mobile à ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/index.php');
+    await page.locator('[data-budget-select]').first().click();
     const more = page.getByRole('button', { name: 'Actions du budget' }).first();
     await expect(more).toBeVisible();
     await more.click();

@@ -26,7 +26,7 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
   <p class="intro">Voyez où vous allez, ce qui est déjà fait et la prochaine action utile — sans vous perdre dans un long formulaire.</p>
 </header>
 <main>
-  <div class="toolbar"><button class="btn" id="addTrack" type="button">＋ Nouvel objectif</button><span class="toolbar-notif"><button class="quick-test" id="quickTestPush" type="button">Tester</button><button class="icon-btn" id="openNotifications" type="button" aria-label="Ouvrir les rappels">🔔<span class="badge" id="notificationBadge" hidden></span></button><span class="quick-status" id="quickStatus" role="status" aria-live="polite"></span></span></div>
+  <div class="toolbar"><button class="btn" id="addTrack" type="button">＋ Nouvel objectif</button><span class="toolbar-notif"><button class="quick-test" id="quickTestPush" type="button">Tester</button><button class="icon-btn" id="openNotifications" type="button" aria-label="Ouvrir les rappels"><span class="toolbar-icon" aria-hidden="true"></span><span class="badge" id="notificationBadge" hidden></span></button><span class="quick-status" id="quickStatus" role="status" aria-live="polite"></span></span></div>
   <section class="summary" id="summary" aria-label="Résumé des objectifs"></section>
   <section class="goals" id="goals" aria-live="polite"></section>
 </main>
@@ -36,7 +36,7 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
     <button class="close" type="button" aria-label="Fermer">×</button>
     <h2 id="trackDialogTitle">Nouvel objectif</h2>
     <input id="trackId" type="hidden">
-    <label>Illustration<select id="trackIcon"><option value="target">🎯 Objectif</option><option value="car">🚗 Mobilité</option><option value="book">🎓 Formation</option><option value="home">🏠 Maison</option><option value="health">💚 Santé</option><option value="travel">✈️ Voyage</option><option value="business">💼 Projet professionnel</option><option value="money">💰 Finance</option><option value="faith">🙏 Foi</option><option value="family">👨‍👩‍👧 Famille</option></select></label>
+    <label>Illustration<select id="trackIcon"><option value="target">Objectif</option><option value="car">Mobilité</option><option value="book">Formation</option><option value="home">Maison</option><option value="health">Santé</option><option value="travel">Voyage</option><option value="business">Projet professionnel</option><option value="money">Finance</option><option value="faith">Foi</option><option value="family">Famille</option></select></label>
     <label>Catégorie facultative<input id="trackCategory" maxlength="80" placeholder="Ex. Formation, Permis, Santé"></label>
     <label>Mon objectif<input id="trackTitle" maxlength="160" required placeholder="Ex. Obtenir mon permis de conduire"></label>
     <label>À quoi ressemble la réussite ?<textarea id="trackSuccess" maxlength="300" placeholder="Ex. Permis obtenu avant le 30 septembre"></textarea></label>
@@ -64,7 +64,7 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
 </dialog>
 
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');</script>
-<script src="session-guard.js?v=<?= $v("session-guard.js") ?>"></script><script src="uuid-polyfill.js"></script>
+<script src="session-guard.js?v=<?= $v("session-guard.js") ?>"></script><script src="icons.js?v=<?= $v('icons.js') ?>"></script><script src="uuid-polyfill.js"></script>
 <script src="assets/vendor/gsap.min.js?v=<?= $v('assets/vendor/gsap.min.js') ?>"></script>
 <script src="assets/vendor/lenis.min.js?v=<?= $v('assets/vendor/lenis.min.js') ?>"></script>
 <script src="objectives-v2.js?v=<?= $v('objectives-v2.js') ?>"></script>

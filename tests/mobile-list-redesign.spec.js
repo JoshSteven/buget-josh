@@ -10,6 +10,7 @@ for (const viewport of [
     await page.setViewportSize(viewport);
     await page.goto('/index.php');
     await expect(page.locator('.art-bg')).toBeAttached();
+    await page.locator('[data-budget-select]').first().click();
     await expect(page.locator('.card.active')).toHaveCount(1);
     const metrics = await page.evaluate(() => ({ width: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
     expect(metrics.width).toBeLessThanOrEqual(metrics.client);
@@ -26,6 +27,7 @@ for (const viewport of [
 
 test('modifier une dépense est regroupé dans le menu contextuel', async ({ page }) => {
   await page.goto('/index.php');
+  await page.locator('[data-budget-select]').first().click();
   await page.getByRole('button', { name: 'Plus d’actions' }).first().click();
   await expect(page.getByRole('menuitem', { name: 'Modifier la dépense' }).first()).toBeVisible();
 });
