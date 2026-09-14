@@ -54,3 +54,5 @@ Le commit est prêt à être poussé sur `origin/master`. Après push, synchroni
 Le 2 septembre 2026, `cdecd02` a été poussé sur GitHub et déployé par cPanel. Le SHA affiché par cPanel est `cdecd021a01b8cc09aa75e73657ecb4910bdb10d`. La migration lot 9 a été appliquée avec succès (`MIGRATION_OK`) et le Cron des dépenses récurrentes a été ajouté à 20h heure serveur. Son `--dry-run` de production répond sans erreur et ne trouve actuellement aucune occurrence due.
 
 Le 2 septembre 2026, l'export CSV a été remplacé par un fichier `.xls` compatible Excel et mis en forme : titre, date, colonnes par budget, montants numériques et totaux. Le test de téléchargement passe ; commit `13bab6e`, inclus dans le déploiement cPanel confirmé sur le SHA `c3f96fcaacea...e44c`.
+
+Le 14 septembre 2026, le bug « Budget introuvable » lors de la modification d'un budget de septembre a été isolé : `rowCount()` valait zéro quand le mois envoyé était identique, ce qui était interprété à tort comme une absence. `api.php` vérifie maintenant l'existence avant la mise à jour. Le test API de non-changement passe et le commit local est `8952ceb`.

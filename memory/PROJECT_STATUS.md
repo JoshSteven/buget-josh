@@ -74,6 +74,13 @@ Pour les autres projets où le remote cPanel est configuré en SSH, utiliser le 
 - Test de téléchargement validé ; commit local `13bab6e` (`Remplacer l export CSV par Excel mis en forme`).
 - Ce correctif a été poussé et déployé en production le 2 septembre 2026 ; cPanel confirme le SHA `c3f96fcaaceaee0e15400996a4a735376e47e44c`.
 
+## Correctif modification budget — 14 septembre 2026
+
+- Cause : `api.php?action=budget_month` utilisait `rowCount()` pour déterminer si le budget existait ; une modification vers la même valeur peut légitimement retourner zéro ligne modifiée.
+- Correction : existence vérifiée par `SELECT` avant l'`UPDATE`, puis succès renvoyé même si la valeur reste identique. Le même principe devra être appliqué à `budget_label` si le même symptôme est signalé pour un projet.
+- Test de régression API ajouté : 19 tests ciblés passent ; lint PHP/JavaScript et diff propres.
+- Commit local : `8952ceb`. Push et déploiement à effectuer après validation utilisateur.
+
 ## Prochain chantier connu
 
 Le lot Pilotage reste le prochain chantier fonctionnel prioritaire : disponible réel vs engagé, répartition et alertes de limite par catégorie. Les notifications Push et les Cron restent à revalider après le prochain déploiement réel.
