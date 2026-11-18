@@ -8,8 +8,8 @@
 | Local | `D:\laragon\www\buget-josh` avec Laragon |
 | Production | o2switch/cPanel — `https://depensesjosh.brightlightmind.online` |
 | Stack | PHP 8.3, MySQL, JavaScript/CSS natifs, Composer, npm/Playwright |
-| Mémoire détaillée | `PROJECT_MEMORY_V2.md` et `memory/projects/budget-josh.md` |
-| État et onboarding | `memory/PROJECT_STATUS.md` |
+| Contexte qui fait foi | `CONTEXTE.md` (produit, règles, architecture, identité visuelle, méthode) |
+| État, lot en cours, points en attente | `SUIVI.md` |
 
 ## Navigation validée
 
