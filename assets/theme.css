@@ -106,9 +106,6 @@ html body .brand-logo{width:52px!important;height:52px!important;border-radius:1
 
 @media(prefers-reduced-motion:reduce){html body *{transition:none!important}}
 
-/* Actions secondaires de l'écran Budgets, côte à côte sous le bouton principal */
-html body .recurring-open,html body .export-button{display:inline-flex!important;align-items:center;justify-content:center;width:calc(50% - 4px)!important;min-height:48px;margin-top:8px!important;padding:10px 12px!important;font-size:14px!important;vertical-align:top}
-html body .recurring-open+.export-button,html body .export-button+.recurring-open{margin-left:8px!important}
 
 /* Rond de statut des dépenses, cohérent avec la coche des objectifs */
 @media(max-width:719px){

@@ -1,0 +1,138 @@
+/* Écran Budgets : styles de base (extraits de l'ancien app-v6.js, lot Fondations).
+   La palette et les finitions communes viennent de assets/theme.css, chargé après. */
+:root{--ink:#1d1d1f;--paper:#f5f5f7;--card:#ffffff;--line:#e5e5ea;--muted:#6e6e73;--green:#2456f5;--pale:#eaf0ff;--orange:#c2700a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);font:15px Arial,sans-serif;color:var(--ink)}
+header,main{max-width:900px;margin:auto;padding:0 16px}
+header{padding-top:24px}
+h1{margin:0;font-size:26px}
+.ey{margin:0 0 5px;color:var(--muted);font-size:10px;letter-spacing:.15em;font-weight:bold}
+.intro{color:var(--muted);margin:6px 0 16px;font-size:13px}
+.button{border:0;border-radius:12px;padding:14px 16px;background:var(--ink);color:#fff;font:inherit;font-weight:bold;cursor:pointer;width:100%}
+.overview{display:flex;gap:9px;overflow-x:auto;margin:14px 0;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.chip{flex:0 0 auto;min-width:190px;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:12px}
+.chip small{display:block;color:var(--muted);margin-top:4px;font-size:11px}
+.sheet{display:block;max-width:720px;margin:14px auto 35px}
+.card{display:none;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px}
+.card.active{display:block}
+.card-head{display:flex;justify-content:space-between;align-items:start;gap:8px;margin-bottom:10px}
+.card-head b{font-size:16px}
+.card-head small{display:block;color:var(--muted);margin-top:3px;font-size:11px}
+.card-tools{position:relative;display:flex;flex:0 0 auto}
+.card-more{border:0;border-radius:50%;width:44px;height:44px;background:var(--pale);color:var(--ink);font-size:22px;line-height:1;cursor:pointer}
+.card-actions-menu{position:absolute;right:0;top:50px;z-index:30;min-width:180px;padding:6px;background:#ffffff;border:1px solid var(--line);border-radius:13px;box-shadow:0 12px 30px #1d1d1f22}
+.card-actions-menu[hidden]{display:none}
+.card-actions-menu button{display:block;width:100%!important;height:auto!important;min-height:44px;border:0;border-radius:9px!important;padding:10px 12px;background:transparent!important;text-align:left;font:inherit;font-size:12px!important;font-weight:bold;cursor:pointer}
+.card-actions-menu .tool-del{color:#d70015}
+.cat-block{margin-top:16px;padding:12px 14px;border-radius:12px}
+.cat-priority{background:#eaf0ff;border-left:4px solid var(--green)}
+.cat-dogs{background:#fff4e5;border-left:4px solid var(--orange);margin-top:22px}
+.cat-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:8px}
+.cat-head span:first-child{font-weight:bold;color:var(--ink);text-transform:uppercase;font-size:11px;letter-spacing:.04em}
+.cat-head span:last-child{color:var(--muted)}
+.entry{background:#f2f2f7;border-radius:10px;padding:9px 10px;margin:6px 0}
+.entry.realised{background:#eaf0ff}
+.entry.cancelled{background:#f2f2f7;opacity:.6}
+.entry.cancelled b{text-decoration:line-through}
+.entry b{display:block;font-size:13px}
+.entry small{display:block;color:var(--muted);font-size:10px;margin-top:1px}
+.entry small.note{color:#3a3a3c;font-style:italic;margin-top:3px}
+.nature-tag{display:inline-block;margin-top:4px;background:var(--pale);color:var(--ink);border-radius:99px;padding:2px 9px;font-size:10px;font-weight:bold}
+.entry-row{display:flex;align-items:center;margin-top:7px;gap:8px;flex-wrap:wrap}
+.entry-amount{flex:1;font-weight:bold;font-size:13px}
+.edit-entry{border:0;border-radius:50%;width:30px;height:30px;flex:0 0 auto;background:var(--pale);color:var(--ink);font-size:13px;cursor:pointer}
+.toggle{border:0;border-radius:99px;padding:8px 13px;font-size:11px;font-weight:bold;cursor:pointer;background:#f2f2f7;color:#6e6e73;min-height:32px;flex:0 0 auto}
+.realised .toggle{background:var(--green);color:white}
+.cancel-entry{border:0;background:transparent;color:#d70015;font-size:11px;font-weight:bold;cursor:pointer;flex:0 0 auto;padding:6px 4px}
+.restore{border:0;background:transparent;color:var(--green);font-size:11px;font-weight:bold;cursor:pointer;flex:0 0 auto;padding:6px 4px}
+.draft{display:grid;grid-template-columns:1fr 90px;gap:6px;margin-top:8px}
+.draft input,.draft select{min-width:0;padding:11px 9px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:13px;min-height:44px;background:#fff}
+.draft input[data-note],.draft select[data-nature]{grid-column:span 2}
+.draft button{grid-column:span 2;border:0;background:#f2f2f7;color:var(--ink);border-radius:8px;padding:9px;font-size:12px;cursor:pointer;min-height:40px}
+.add{margin-top:8px;background:transparent;border:0;color:var(--green);font-weight:bold;font-size:13px;cursor:pointer;padding:6px 0;min-height:32px}
+.card-total{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.card-total strong{color:var(--ink);width:100%;font-size:14px;margin-top:2px}
+.save{width:100%;margin-top:10px;border:0;border-radius:10px;padding:13px;background:var(--green);color:white;font-weight:bold;cursor:pointer;font-size:14px}
+.empty{color:var(--muted);font-size:12px}
+dialog{border:0;border-radius:21px 21px 0 0;width:min(560px,100%);margin:auto auto 0;padding:23px;background:var(--card)}
+dialog::backdrop{background:#00000066}
+form{display:grid;gap:12px;position:relative}
+.close{position:absolute;right:0;top:-5px;border:0;border-radius:50%;font-size:22px;width:34px;height:34px}
+label{font-size:12px;color:var(--muted);font-weight:bold}
+input,select{display:block;width:100%;margin-top:5px;padding:13px 12px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:15px}
+.hidden{display:none}
+@media(max-width:480px){header,main{padding:0 12px}
+h1{font-size:23px}
+}
+.entry-menu{position:relative;flex:0 0 auto}
+.more-entry{border:0;border-radius:50%;width:44px;height:44px;background:#f2f2f7;color:var(--ink);font-size:22px;line-height:1;cursor:pointer}
+.entry-actions-menu{position:absolute;right:0;top:50px;z-index:20;min-width:160px;padding:6px;background:#ffffff;border:1px solid var(--line);border-radius:13px;box-shadow:0 12px 30px #1d1d1f22}
+.entry-actions-menu[hidden]{display:none}
+.entry-actions-menu button{width:100%;min-height:44px;border:0;border-radius:9px;padding:10px 12px;background:transparent;text-align:left;font:inherit;font-size:12px;font-weight:bold;cursor:pointer}
+.entry-actions-menu .cancel-entry{color:#d70015}
+.entry-actions-menu .restore{color:var(--green)}
+.edit-entry,.card-tools button,.close{min-width:44px!important;width:44px!important;height:44px!important}
+.toggle,.add,.save{min-height:44px!important}
+.art-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;background:linear-gradient(145deg,#f5f5f7 0%,#f5f5f7 55%,#f5f5f7 100%)}
+.art-bg::before,.art-bg::after{content:"";position:absolute;border-radius:45% 55% 62% 38%/55% 42% 58% 45%;filter:blur(2px);opacity:.5}
+.art-bg::before{width:420px;height:420px;right:-180px;top:6%;background:radial-gradient(circle at 35% 35%,#eaf0ff 0 34%,#eaf0ff 35% 58%,transparent 59%);transform:rotate(18deg)}
+.art-bg::after{width:370px;height:370px;left:-190px;bottom:4%;background:radial-gradient(circle at 60% 45%,#ffe9eb 0 23%,#ffe9eb 24% 49%,transparent 50%);transform:rotate(-22deg)}
+.entry-main{min-width:0}
+.entry-side{display:flex;align-items:center;gap:8px}
+.draft-title{display:none}
+.draft-close,.draft-submit{display:none}
+.chip{font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+.chip.active{border-color:var(--green);box-shadow:inset 0 0 0 1px var(--green)}
+@media(max-width:719px){body{background:transparent}
+.art-bg::before{width:310px;height:310px;right:-170px;top:3%;opacity:.48}
+.art-bg::after{width:290px;height:290px;left:-160px;bottom:12%;opacity:.42}
+header,main{max-width:560px}
+.overview{scrollbar-width:none;position:sticky;top:0;z-index:15;padding:8px 0;background:#f5f5f7dd;backdrop-filter:blur(14px)}
+.overview::-webkit-scrollbar{display:none}
+.chip{min-width:165px;padding:10px 12px;border-radius:16px}
+.chip small{white-space:nowrap}
+.sheet{display:block}
+.card{display:none;padding:15px 12px;border:0;border-radius:22px;box-shadow:0 18px 55px #1d1d1f12;background:#ffffffee;backdrop-filter:blur(8px)}
+.card.active{display:block}
+.card-head{padding:2px 3px 12px;border-bottom:1px solid var(--line)}
+.cat-block{margin-top:8px;padding:12px 0;background:transparent!important;border-left:0}
+.cat-dogs{margin-top:8px;border-top:1px solid var(--line)}
+.cat-head{padding:0 4px 7px;margin:0}
+.entry{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0;padding:11px 4px;border-radius:0;border-bottom:1px solid #f2f2f7;background:transparent!important}
+.entry:last-of-type{border-bottom:0}
+.entry.cancelled{opacity:.58}
+.entry b{font-size:14px;line-height:1.25}
+.entry small{font-size:11px;margin-top:3px}
+.entry small.note{max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nature-tag{font-size:9px;padding:2px 7px}
+.entry-row{display:flex;flex-direction:column-reverse;align-items:flex-end;gap:4px;margin:0;flex:0 0 auto}
+.entry-amount{font-size:13px;white-space:nowrap}
+.entry-side{gap:3px}
+.toggle{width:44px;min-width:44px!important;height:44px;min-height:44px!important;padding:0;border-radius:50%;font-size:0}
+.toggle::before{content:"○";font-size:24px;line-height:1}
+.realised .toggle::before{content:"✓";font-size:18px}
+.more-entry{background:transparent}
+.entry-actions-menu{top:45px;min-width:185px}
+.add{display:flex;align-items:center;justify-content:center;width:100%;margin:8px 0 0;border:1px dashed #a9bdfb;border-radius:12px;background:#eaf0ff;padding:10px}
+.card-total{padding:12px 4px 0}
+.save{display:none}
+.draft-backdrop{position:fixed;inset:0;z-index:80;background:#0000006b;backdrop-filter:blur(2px)}
+.draft{position:fixed;left:0;right:0;bottom:0;z-index:81;display:grid;grid-template-columns:1fr 110px;gap:10px;margin:0;padding:20px 16px calc(18px + env(safe-area-inset-bottom));border-radius:24px 24px 0 0;background:#ffffff;box-shadow:0 -18px 55px #00000030}
+.draft-title{display:block;grid-column:span 2;margin:0;font-size:18px}
+.draft-close{display:block;position:absolute;right:14px;top:12px;width:44px;height:44px;border:0;border-radius:50%;background:#f2f2f7;font-size:22px}
+.draft input,.draft select{font-size:16px}
+.draft button[data-draft-toggle]{grid-column:span 2;min-height:44px}
+.draft-submit{display:block!important;grid-column:span 2!important;min-height:48px!important;background:var(--green)!important;color:#fff!important;font-size:14px!important}
+.card-actions-menu{top:45px}
+.ey{position:relative}
+.button{box-shadow:0 8px 20px #1d1d1f20}
+}
+@media(prefers-reduced-motion:reduce){.art-bg::before,.art-bg::after{transform:none}
+}
+/* Lot Fondations : la feuille « Nouvelle dépense » s'enregistre elle-même, sur mobile comme sur ordinateur. */
+@media(min-width:720px){.draft{position:relative}}
+.draft-title{display:block;grid-column:span 2;margin:0 44px 0 0;font-size:16px}
+.draft-close{display:block;position:absolute;right:6px;top:6px;width:44px;height:44px;border:0;border-radius:50%;background:#f2f2f7;font-size:22px;cursor:pointer}
+.draft-submit{display:block!important;grid-column:span 2!important;min-height:48px!important;border:0;border-radius:12px;background:var(--green)!important;color:#fff!important;font-weight:bold;cursor:pointer}
+.draft-error{grid-column:span 2;margin:0;min-height:1em;color:#d70015;font-size:13px}
+#budgetError{grid-column:auto}

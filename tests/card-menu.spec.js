@@ -11,13 +11,13 @@ for (const width of [360, 390]) {
     await expect(page.getByRole('menuitem', { name: 'Modifier le budget' }).first()).toBeVisible();
     const remove = page.getByRole('menuitem', { name: 'Supprimer le budget' }).first();
     await expect(remove).toBeVisible();
-    page.once('dialog', async dialog => {
-      expect(dialog.type()).toBe('confirm');
-      expect(dialog.message()).toContain('Attention');
-      expect(dialog.message()).toContain('irréversible');
-      await dialog.dismiss();
-    });
     await remove.click();
+    const sheet = page.locator('dialog.confirm-sheet');
+    await expect(sheet).toContainText('Attention');
+    await expect(sheet).toContainText('irréversible');
+    await sheet.getByRole('button', { name: 'Garder' }).click();
+    await expect(sheet).toHaveCount(0);
+    await expect(page.locator('[data-budget-select]')).toHaveCount(2);
     await expect(page.locator('body')).not.toHaveCSS('overflow-x', 'scroll');
   });
 }

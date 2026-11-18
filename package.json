@@ -2,7 +2,7 @@
   "name": "buget-josh",
   "version": "1.0.0",
   "description": "Cette version reprend la méthode du fichier Excel : apports personnels ou liés aux projets (TEDxOuaga, CAFDO, YELEKO), dîme automatique à 10 %, priorités non obligatoires, catégorie **Petits chiens**, dépenses prévues ou réalisées et objectifs annuels à dérouler par mois.",
-  "main": "app-v6.js",
+  "main": "budgets.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/joshsteven/buget-josh.git"
