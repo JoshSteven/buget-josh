@@ -1,4 +1,5 @@
 const { request } = require('@playwright/test');
+const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -6,11 +7,18 @@ const path = require('path');
 // On ouvre donc une session une seule fois ici, et tous les tests la réutilisent via
 // `storageState`. Le mot de passe local de test n'est jamais celui de la production :
 // il se pose avec `php set-password.php` sur la base de développement.
-const BASE_URL = process.env.BUDGET_JOSH_BASE_URL || 'http://127.0.0.1:8080';
+const BASE_URL = process.env.BUDGET_JOSH_BASE_URL || 'http://127.0.0.1:8081';
 const PASSWORD = process.env.BUDGET_JOSH_TEST_PASSWORD || 'test-local-jetable-2026';
 const STATE_PATH = path.join(__dirname, '.auth-state.json');
 
 module.exports = async () => {
+  // Base de test neuve à chaque lancement : structure + données fictives + mot de passe de test.
+  if (!process.env.BUDGET_JOSH_BASE_URL) {
+    execFileSync(process.env.BUDGET_JOSH_PHP || 'php', [path.join(__dirname, 'reset-test-db.php')], {
+      env: { ...process.env, BUDGET_JOSH_TEST_PASSWORD: PASSWORD },
+      stdio: 'inherit',
+    });
+  }
   const context = await request.newContext({ baseURL: BASE_URL });
   const response = await context.post('/auth-api.php?action=login', {
     data: { password: PASSWORD },
