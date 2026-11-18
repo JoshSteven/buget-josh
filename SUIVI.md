@@ -6,17 +6,17 @@ Mis à jour le 18 novembre 2026. Les règles et l'architecture sont dans `CONTEX
 
 | Élément | État |
 |---|---|
-| Production | Lot 10 déployé le 18 novembre (`57b97e1`), confirmé par Josh. |
-| Local | Lot 11 terminé et commité, **pas encore poussé ni déployé**. |
+| Production | Lot 11 déployé le 18 novembre (`6173386`) : sauvegarde SQL faite, `composer install` (6 paquets), migration lot 11 appliquée, dry-run du Cron sans erreur. Contrôle externe : cache v14 servi, `export-excel.php` protégé (302 vers la connexion). |
+| Local | À jour avec la production. Clé SSH dédiée `id_ed25519_budgetjosh_o2switch` créée sur le PC, à autoriser dans cPanel. |
 | Qualité locale | 46 tests Playwright verts (dont Axe sur 5 pages), lint PHP et JS propres. |
-| Migrations | Lots 2 à 9 appliqués en production. **`lot-11-recurring-monthly.sql` à appliquer.** |
+| Migrations | Lots 2 à 11 appliqués en production. Aucune en attente. |
 
 ### Lots livrés
 | Lot | Contenu | Production |
 |---|---|---|
 | 1a à 9 | Notes, natures, annulation, Tableau de bord et plafonds, Objectifs datés, liaisons, hors connexion, rappels et Web Push, authentification, récurrences | Oui |
 | 10 | Liste des récurrences visible, rangée des budgets stable, modification sans changement, coche ronde des objectifs, thème premium sans vert, logo jOSH budget | Oui (`57b97e1`) |
-| 11 | Voir ci-dessous | Non |
+| 11 | Voir ci-dessous | Oui (`6173386`) |
 
 ## 2. Lot 11 : récurrences mensuelles, en-tête d'actions, vrai Excel
 
@@ -36,13 +36,13 @@ Défauts de l'ancien Excel, pour mémoire : fausse extension `.xls` (avertisseme
 ### Mise en production du lot 11 (dans cet ordre)
 1. **Sauvegarde SQL** de la base de production (phpMyAdmin, export).
 2. Push GitHub, puis dans cPanel `Update from Remote` et `Deploy HEAD Commit`.
-3. Terminal cPanel, dans le dossier du site : `php composer.phar install --no-dev --optimize-autoloader` (nouvelle bibliothèque PhpSpreadsheet ; sans elle, le bouton Excel renvoie une erreur).
+3. Terminal cPanel, dans le dossier du site : `composer install --no-dev --optimize-autoloader` (composer global du serveur, pas de `composer.phar` dans le dossier) (nouvelle bibliothèque PhpSpreadsheet ; sans elle, le bouton Excel renvoie une erreur).
 4. Appliquer `database/lot-11-recurring-monthly.sql` (phpMyAdmin ou terminal).
 5. `php -q cron-recurring-expenses.php --dry-run` : doit répondre sans erreur avec `waiting_for_grace`.
 6. Smoke test : connexion, bouton Excel (le fichier s'ouvre sans avertissement), fenêtre Récurrences.
 
-### Données de production à vérifier après déploiement
-Les récurrences créées avant le lot 11 ont pu placer des dépenses dans un mauvais mois (toujours le budget choisi à leur création). Elles ne sont pas déplacées automatiquement : à repérer dans l'onglet Dépenses de l'Excel (symbole ↻) et à corriger ou annuler à la main si besoin.
+### Données de production
+La table `recurring_expenses` était vide en production au déploiement : aucune dépense récurrente mal placée à corriger.
 
 ## 3. Environnement de test local
 - Serveur `php -S 127.0.0.1:8080` avec le PHP 8.3 de Laragon (`.claude/launch.json`, extensions passées en `-d` car ce PHP n'a pas de `php.ini`).
