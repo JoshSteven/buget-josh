@@ -72,11 +72,13 @@ Téléphone : barre fixe en bas à 4 icônes avec libellés courts et zone sûre
 
 ## 4. Architecture
 
-- **Frontend** : HTML, CSS et JavaScript natifs, sans framework. `app-v6.js` construit l'écran Budgets ; des scripts complémentaires s'y greffent (`budget-enhancements.js`, `recurring-expenses.js`, `draft-flow.js`, `mobile-motion.js`, `offline-sync.js`). GSAP et Lenis pour les mouvements, servis depuis `assets/vendor/`.
-- **Backend** : endpoints PHP + PDO avec requêtes préparées (`api.php`, `recurring-api.php`, `goals-v2-api.php`, `links-api.php`, `limits-api.php`, `notifications-api.php`, `auth-api.php`).
-- **Données** : MySQL. Tables : `budgets`, `budget_payments`, `entries`, `recurring_expenses`, `budget_limits`, `goal_tracks`, `goal_tasks`, `goal_reminders`, `push_subscriptions`, tables d'authentification.
-- **PWA** : `manifest.webmanifest`, `sw.js` (réseau d'abord, cache de secours), file d'écritures hors connexion dans `localStorage`. Scripts versionnés par `?v=<filemtime>` pour contourner le cache.
-- **Tests** : Playwright (`tests/`, session ouverte par `global-setup.js`), tailles 320, 360, 390 et 430 px, plus Axe. Serveur attendu sur `http://127.0.0.1:8080` (variable `BUDGET_JOSH_BASE_URL`).
+- **Frontend** : HTML, CSS et JavaScript natifs, sans framework. Écran Budgets : **un seul fichier, `budgets.js`** (un état, un affichage, un écouteur) et sa feuille `assets/budgets.css`. Modules partagés : `recurring-expenses.js` (fenêtre des récurrences et feuille de confirmation `window.BudgetConfirm`), `mobile-motion.js` (navigation, logo, animations), `offline-sync.js` (hors connexion), `session-guard.js` (bouton Quitter). Thème commun `assets/theme.css`. GSAP et Lenis dans `assets/vendor/`.
+- **Backend** : socle commun **`lib/bootstrap.php`** (connexion unique `budgetDb()`, réponses `budgetJson()`/`budgetFail()`, lecture validée `budgetAmount()`, `budgetDate()`, `budgetId()`…, contrôle d'origine), chargé par `auth.php`. **Moteur de calcul unique `lib/budget-totals.php`** : tous les totaux (reçu, réalisé, prévu, disponibles, catégories, natures) viennent de là, pour l'écran Budgets, le Tableau de bord et l'export. Endpoints : `api.php`, `recurring-api.php`, `goals-v2-api.php`, `links-api.php`, `limits-api.php`, `notifications-api.php`, `auth-api.php`, `export-excel.php`.
+- **Outils en ligne de commande** (`bin/`, interdit au web) : `migrate.php` (migrations suivies dans `schema_migrations`), `backup-database.php` (sauvegarde gzip dans `~/backups/budget-josh`, 14 conservées par type), `remote-deploy.sh` (exécuté par `deploy.ps1`).
+- **Données** : MySQL. Tables : `budgets`, `budget_payments`, `entries`, `recurring_expenses`, `recurring_expense_runs`, `budget_limits`, `goal_tracks`, `goal_tasks`, `goal_reminders`, `push_subscriptions`, `schema_migrations`, tables d'authentification. Structure de référence : `database/schema.sql`.
+- **PWA** : `manifest.webmanifest`, `sw.js` (réseau d'abord, cache de secours, version à changer à chaque livraison visible), file d'écritures hors connexion dans `localStorage`. Scripts versionnés par `?v=<filemtime>`.
+- **Tests** : Playwright, `npm test`. Ils démarrent leur propre serveur (port 8081) sur la base **`budget_josh_test`**, recréée à chaque lancement depuis `database/schema.sql` et des données fictives (`tests/fixtures.sql`). La base de développement `budget_josh` n'est jamais touchée. Une seconde tentative par test absorbe les fermetures inattendues du navigateur sous Windows.
+- **Déploiement** : **`npm run deploy`** depuis le PC (tests, push GitHub, puis par SSH : dépôt cPanel, copie des fichiers, composer, sauvegarde, migrations, contrôle des Cron, vérification du site). `npm run deploy:simuler` ne modifie rien. Alias SSH `budgetjosh`, clé dédiée ; si la box change d'IP, l'ajouter dans cPanel > Autorisation SSH. Les boutons cPanel restent possibles en secours.
 
 ## 5. Sécurité (invariants)
 
@@ -84,7 +86,9 @@ Téléphone : barre fixe en bas à 4 icônes avec libellés courts et zone sûre
 - `budgetNoStore()` désactive le cache (LiteSpeed) sur les réponses authentifiées.
 - Jamais dans Git : `config.php`, `.env`, `notification-secrets.php`, clés privées, exports SQL.
 - Le `.htaccess` racine n'est pas versionné. Il porte `DirectoryIndex index.php`, `Options -Indexes` et le blocage de `/vendor/` et des manifestes de dépendances. À vérifier après toute action de cPanel sur la « Confidentialité du répertoire » : sa perte ne produit aucune erreur visible.
-- Toute nouvelle migration : idempotente, ajoutée aux exceptions `!database/...` de `.gitignore`, testée localement, **précédée d'une sauvegarde SQL de production**.
+- Toute nouvelle migration : fichier `database/lot-N-....sql`, idempotente, ajoutée aux exceptions `!database/...` de `.gitignore`, testée localement, et répercutée dans `database/schema.sql`. La sauvegarde de production avant migration est faite automatiquement par `npm run deploy`.
+- Contrôle d'origine sur toutes les requêtes qui modifient des données (`budgetRequireSameOrigin()`), en plus du cookie `SameSite=Lax`.
+- Sauvegarde automatique de la base chaque nuit à 2 h 30 (Cron installé par le premier `npm run deploy`).
 
 ## 6. Identité visuelle
 

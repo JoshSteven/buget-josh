@@ -16,6 +16,9 @@ module.exports = defineConfig({
   testDir: './tests',
   timeout: 30000,
   workers: 1,
+  // Une seconde tentative absorbe une fermeture inattendue du navigateur de test sous Windows
+  // (vue 2 fois sur 7 lancements, le 18 novembre). Un test réussi au second essai reste signalé « flaky ».
+  retries: 1,
   globalSetup: require.resolve('./tests/global-setup.js'),
   webServer: process.env.BUDGET_JOSH_BASE_URL ? undefined : {
     command: `"${PHP}" -S 127.0.0.1:8081 -t "${__dirname}"`,
