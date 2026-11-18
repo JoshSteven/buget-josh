@@ -25,6 +25,8 @@ Les données de production sont les vraies finances personnelles de Josh depuis 
 
 Téléphone : barre fixe en bas à 4 icônes avec libellés courts et zone sûre iOS/Android. Ordinateur : 4 boutons horizontaux dans l'en-tête. La navigation est injectée par `mobile-motion.js`.
 
+Écran Budgets (lot 11) : actions secondaires en icônes dans l'en-tête (Récurrences, Excel, Quitter), seul « Créer un budget » reste en gros bouton. À partir de 1000 px, deux colonnes façon iPad : liste des budgets à gauche, budget ouvert à droite.
+
 ## 3. Règles métier
 
 ### Budgets
@@ -40,8 +42,15 @@ Téléphone : barre fixe en bas à 4 icônes avec libellés courts et zone sûre
 - 14 natures : Foi / générosité, Charges essentielles, Famille, Transport, Outils professionnels, Épargne / engagements financiers, Dettes / remboursements, Plaisir / alimentation, Loisirs, Télécoms / connectivité, Abonnements numériques, Équipement / matériel, Santé / bien-être, Autre.
 
 ### Dépenses récurrentes
-- Modèle mensuel (`recurring_expenses`) : budget, libellé, montant, catégorie, première date, nature et note facultatives.
-- `cron-recurring-expenses.php` génère les occurrences dues chaque jour à 20 h (heure serveur). Les dépenses déjà générées sont conservées si la récurrence est supprimée.
+- **Décision de Josh (18 novembre 2026) : une récurrence n'appartient à aucun budget précis.** Elle comporte libellé, montant, catégorie, date de départ (qui fixe le jour du mois), nature et note facultatives.
+- Chaque mois, l'occurrence est ajoutée comme dépense **prévue** dans la **Grâce de ce mois**. Si cette Grâce n'existe pas encore, la récurrence attend. Les budgets Projet ne reçoivent jamais de récurrence.
+- La génération (`recurring-service.php`) est déclenchée à trois moments : création d'une Grâce (ou changement de son mois), création d'une récurrence, et Cron quotidien de 20 h. Le suivi `recurring_expense_runs` empêche tout doublon.
+- Pause : plus rien n'est ajouté. Suppression : confirmation obligatoire ; les dépenses déjà créées restent. Supprimer une Grâce ne supprime plus aucune récurrence et permet de regénérer ses occurrences si elle est recréée.
+- L'ancienne colonne `recurring_expenses.budget_id` est conservée (facultative depuis `lot-11-recurring-monthly.sql`) mais n'est plus utilisée.
+
+### Export Excel
+- Vrai fichier `.xlsx` produit côté serveur par `export-excel.php` (PhpSpreadsheet, via Composer), protégé par `budgetRequireAuthPage()`.
+- Quatre onglets : Synthèse (une ligne par budget), Dépenses (une ligne par dépense, filtres), Par catégorie (et par nature), Récurrences. Annulées visibles mais barrées et exclues de tous les totaux.
 
 ### Plafonds (Tableau de bord)
 - Par catégorie, en montant fixe ou en pourcentage des revenus du périmètre choisi (`budget_limits`). Valeur nulle = plafond désactivé.
