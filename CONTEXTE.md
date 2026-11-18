@@ -93,6 +93,7 @@ Téléphone : barre fixe en bas à 4 icônes avec libellés courts et zone sûre
 | Alerte | `#D70015` | Suppression, dépassement de plafond |
 | Logo / barre système | `#0B1B3A` bleu nuit | Icône d'application, `theme-color` |
 
+- **Logo (choisi par Josh le 18 novembre, option B)** : fond bleu saphir `#2456F5`, grand « j » blanc dont le point est une pièce bleu nuit, « OSH » en petit indice en bas à droite (jOSH) et « budget » encore plus discret dessous. Source : `assets/brand/logo-b-josh.svg` (police Manrope intégrée). Icônes dérivées : `assets/logo.svg`, `icon-192/512.png`, `icon-maskable-*.png`, `apple-touch-icon.png`.
 - Typographie : **Manrope** pour les titres (600 à 700), **Inter** pour le texte (16 px, interligne 1,5), toutes deux servies localement. Pas de SF Pro (licence).
 - Style : surfaces blanches sur fond gris clair, coins arrondis généreux, ombres très douces, flou léger sur les barres, pas de taches décoratives ni de dégradés, `prefers-reduced-motion` respecté.
 - Zones tactiles de 44 à 48 px. Montants en F CFA, interface en français, aucun tiret cadratin dans les textes.

@@ -38,7 +38,7 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Connexion — Budget Josh</title>
 <style>
 :root{--ink:#1d1d1f;--paper:#f5f5f7;--card:#ffffff;--line:#e5e5ea;--green:#2456f5;--green-soft:#eaf0ff;--muted:#6e6e73;--red:#d70015;--red-soft:#ffe9eb}

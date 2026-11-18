@@ -61,7 +61,7 @@
     if (header.querySelector('.brand-logo')) return;
     const logo = document.createElement('img');
     logo.className = 'brand-logo';
-    logo.src = 'assets/logo-budget-josh.png';
+    logo.src = 'assets/logo.svg';
     logo.alt = 'Budget Josh';
     logo.width = 62;
     logo.height = 62;
