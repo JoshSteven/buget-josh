@@ -7,7 +7,7 @@ Mis à jour le 18 novembre 2026. Les règles et l'architecture sont dans `CONTEX
 | Élément | État |
 |---|---|
 | Production | Lot 11 déployé le 18 novembre (`6173386`) : sauvegarde SQL faite, `composer install` (6 paquets), migration lot 11 appliquée, dry-run du Cron sans erreur. Contrôle externe : cache v14 servi, `export-excel.php` protégé (302 vers la connexion). |
-| Local | À jour avec la production. Clé SSH dédiée `id_ed25519_budgetjosh_o2switch` créée sur le PC, à autoriser dans cPanel. |
+| Local | À jour avec la production. Accès SSH opérationnel le 18 novembre : alias `budgetjosh` (clé dédiée `id_ed25519_budgetjosh_o2switch`, autorisée dans cPanel ; IP 102.180.15.235 autorisée dans le pare-feu o2switch, à rajouter si la box change d'IP). Serveur roux.o2switch.net, PHP 8.3.36, composer et mysqldump disponibles. |
 | Qualité locale | 46 tests Playwright verts (dont Axe sur 5 pages), lint PHP et JS propres. |
 | Migrations | Lots 2 à 11 appliqués en production. Aucune en attente. |
 
