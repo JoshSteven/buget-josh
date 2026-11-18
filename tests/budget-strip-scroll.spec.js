@@ -2,6 +2,7 @@ const { test, expect } = require('@playwright/test');
 
 // Simule dix budgets en dupliquant ceux de la base locale, sans rien écrire en base.
 async function manyBudgets(page) {
+  const seen = {};
   await page.route('**/api.php?action=bootstrap', async route => {
     const response = await route.fetch();
     const data = await response.json();
@@ -14,22 +15,21 @@ async function manyBudgets(page) {
       period_month: null,
       project_date: '2026-0' + (1 + (index % 5)) + '-1' + index,
     }));
-    await route.fulfill({ response, json: { ...data, budgets: [...data.budgets, ...extra] } });
+    const budgets = [...data.budgets, ...extra];
+    budgets.forEach(b => { seen[b.id] = String(b.period_month || b.project_date); });
+    await route.fulfill({ response, json: { ...data, budgets } });
   });
+  return seen;
 }
 
 test('le plus récent est à gauche et la rangée ne revient pas au début après un choix', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await manyBudgets(page);
+  const keys = await manyBudgets(page);
   await page.goto('/index.php');
   const strip = page.locator('#overview');
   const chips = strip.locator('[data-budget-select]');
   await expect(chips).toHaveCount(12);
 
-  const keys = await page.evaluate(async () => {
-    const data = await (await fetch('api.php?action=bootstrap')).json();
-    return Object.fromEntries(data.budgets.map(b => [b.id, String(b.period_month || b.project_date)]));
-  });
   const order = await chips.evaluateAll(nodes => nodes.map(node => node.dataset.budgetSelect));
   const dates = order.map(id => keys[id]);
   expect(dates).toEqual([...dates].sort().reverse());

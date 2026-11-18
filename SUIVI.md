@@ -8,7 +8,7 @@ Mis à jour le 18 novembre 2026. Les règles et l'architecture sont dans `CONTEX
 |---|---|
 | Git | `master` = `origin/master` = `e535eed` |
 | cPanel | Dépôt à jour sur `e535eed` (capture du 18 novembre). Le passage de `Deploy HEAD Commit` reste à confirmer dans l'onglet « Pull or Deploy ». |
-| Qualité locale | Lint PHP et JS propres. 12 fichiers de tests Playwright, non relancés le 18 novembre. |
+| Qualité locale | 44 tests Playwright verts au 18 novembre (dont Axe sur 5 pages), lint PHP et JS propres. |
 | Migrations | Lots 2, 4, 5, 6, 7, 8 et 9 appliqués en production. Aucune migration en attente. |
 
 ### Lots livrés
@@ -37,15 +37,17 @@ Mis à jour le 18 novembre 2026. Les règles et l'architecture sont dans `CONTEX
 
 Décision de Josh (18 novembre) : tout traiter en un seul lot. La palette est à mon choix (voir `CONTEXTE.md`, section 6). **Aucun changement de base de données n'est prévu**, donc aucune migration.
 
-| Étape | Travail | Fichiers touchés | Preuve attendue |
+| Étape | Travail | État au 18 novembre | Preuve |
 |---|---|---|---|
-| 1 | Liste des récurrences visible dans sa fenêtre : libellé, montant, budget, prochaine date, Pause/Activer, Supprimer. Fenêtre en feuille du bas sur téléphone. | `recurring-expenses.js`, `tests/recurring-expenses.spec.js` | Test : créer, voir dans la liste, mettre en pause, supprimer |
-| 2 | Budgets : un seul ordre (le plus récent à gauche), défilement conservé au clic, budget choisi ramené au centre de la rangée | `app-v6.js`, `budget-enhancements.js`, nouveau test | Test : faire défiler, choisir un budget, la position reste |
-| 3 | `expense_update` : vérifier l'existence avant la mise à jour | `api.php`, test API | Test : modifier sans rien changer = succès |
-| 4 | Objectifs : grande coche ronde comme dans Rappels d'Apple, animation courte, vibration légère, bandeau « Annuler » quelques secondes, et validation de la prochaine action directement depuis la carte | `objectives-v2.js`, `objectives-v2.php`, `tests/objectives-v2.spec.js` | Test : cocher depuis la carte, progression mise à jour, annulation |
-| 5 | Système visuel commun `assets/theme.css` chargé sur toutes les pages : palette, Manrope et Inter locales, cartes, boutons, champs, tiroirs, navigation. Retrait du vert et des taches de fond. | `assets/theme.css`, `assets/fonts/`, les 6 pages, `mobile-motion.js`, `app-v6.js`, `manifest.webmanifest` | Captures 375 px et ordinateur des 4 écrans et de la connexion |
-| 6 | Nouveau logo (monogramme « J » sur fond bleu nuit, format icône iOS) et icônes PWA 192, 512 et maskable. Montré à Josh avant remplacement. | `assets/logo.svg`, `icon-*.png`, `login.php`, `sw.js` (version du cache) | Rendu des icônes, installation PWA |
-| 7 | Suite Playwright complète + Axe, vérification au navigateur, `CONTEXTE.md`/`SUIVI.md` à jour, commits, push, puis déploiement cPanel | tous | Tests verts, SHA cPanel = SHA poussé, smoke test |
+| 1 | Liste des récurrences visible : libellé, montant, budget, prochaine date, Mettre en pause/Reprendre, Supprimer | Fait, `f1c1abe` | Test de bout en bout : créer, voir, pause, reprise, suppression |
+| 2 | Budgets : le plus récent à gauche, défilement conservé, budget choisi ramené au centre | Fait, `e6c82f5` | Test avec 12 budgets simulés + test « un seul budget actif » |
+| 3 | `expense_update` et `budget_label` : existence vérifiée avant la mise à jour | Fait, `be7538f` | Test API : modification identique = 200, identifiant inconnu = 404 |
+| 4 | Objectifs : coche ronde façon Rappels, animation, vibration, bandeau « Annuler » 5 s, prochaine action cochable depuis la carte | Fait, `008e653` et `0242f4b` | Tests Objectifs (10) + contrôle visuel 375 px et ordinateur |
+| 5 | Thème commun `assets/theme.css` : palette sans vert, Inter et Manrope locales, barre d'onglets givrée, boutons bleus, cache PWA v12 | Fait, `aa9cb86` | Captures des 4 écrans, Axe sans violation grave sur 5 pages |
+| 6 | Nouveau logo et icônes PWA | **En attente du choix de Josh** (A bleu nuit recommandé, B saphir, C clair). Sources dans `assets/brand/`. | Aperçu envoyé |
+| 7 | Push GitHub puis déploiement cPanel | **En attente de l'accord de Josh** | SHA cPanel = SHA poussé, smoke test |
+
+Environnement de test local : serveur `php -S 127.0.0.1:8080` avec PHP 8.3 de Laragon (configuration dans `.claude/launch.json`, extensions passées en `-d` car ce PHP n'a pas de `php.ini`). Mot de passe local de test posé sur la base `budget_josh` : celui de `tests/global-setup.js`, à ne jamais utiliser en production. Sauvegarde de la base locale avant le lot : `database/backup_local_avant_lot10_2026-11-18.sql`.
 
 ### Risques identifiés
 - **CSS éparpillé** : des styles sont injectés par JavaScript (`app-v6.js` dans le `body`, `mobile-motion.js` avec `!important`). Le thème commun doit donc avoir une priorité plus forte. Solution : sélecteurs renforcés dans `theme.css`, puis retrait progressif des couleurs codées en dur.
