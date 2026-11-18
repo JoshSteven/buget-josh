@@ -11,7 +11,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
-$OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = New-Object System.Text.UTF8Encoding $false  # sans BOM : bash refuserait la premiere ligne
 $Site = 'https://depensesjosh.brightlightmind.online'
 
 function Etape($texte) { Write-Host "`n>> $texte" -ForegroundColor Cyan }
