@@ -5,6 +5,8 @@ test('Objectifs ne présente aucune violation critique ou sérieuse', async ({ p
   const errors = [];
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
   await page.setViewportSize({ width: 390, height: 844 });
+  // Les cartes apparaissent en fondu : on juge l'état final, pas une image prise en pleine animation.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/objectives.php');
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter(v => ['critical', 'serious'].includes(v.impact))).toEqual([]);

@@ -31,20 +31,20 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#123b35">
+<meta name="theme-color" content="#f5f5f7">
 <meta name="robots" content="noindex,nofollow">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Connexion — Budget Josh</title>
 <style>
-:root{--ink:#123b35;--paper:#f5f3ed;--card:#fffefa;--line:#dbe2da;--green:#197451;--green-soft:#e2f3e8;--muted:#526b65;--red:#bd4934;--red-soft:#f9e4de}
+:root{--ink:#1d1d1f;--paper:#f5f5f7;--card:#ffffff;--line:#e5e5ea;--green:#2456f5;--green-soft:#eaf0ff;--muted:#6e6e73;--red:#d70015;--red-soft:#ffe9eb}
 *{box-sizing:border-box}
 html{background:var(--paper)}
-body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px 18px calc(24px + env(safe-area-inset-bottom));color:var(--ink);font:15px Arial,sans-serif;background:radial-gradient(circle at -6% 78%,#f5cfc5 0 11%,transparent 11.3%),radial-gradient(circle at 104% 16%,#d9eedf 0 15%,transparent 15.3%),var(--paper)}
+body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px 18px calc(24px + env(safe-area-inset-bottom));color:var(--ink);font:15px Arial,sans-serif;background:radial-gradient(circle at -6% 78%,#ffe9eb 0 11%,transparent 11.3%),radial-gradient(circle at 104% 16%,#eaf0ff 0 15%,transparent 15.3%),var(--paper)}
 button,input{font:inherit}
 .shell{width:min(410px,100%)}
 .brand{display:flex;align-items:center;gap:11px;margin-bottom:22px}
@@ -52,7 +52,7 @@ button,input{font:inherit}
 .brand span{display:block}
 .brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.15em;font-weight:bold}
 .brand b{display:block;font-size:20px;letter-spacing:-.4px}
-.card{background:#fffefaf5;border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:0 18px 46px #123b3518;backdrop-filter:blur(8px)}
+.card{background:#fffffff5;border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:0 18px 46px #1d1d1f18;backdrop-filter:blur(8px)}
 h1{margin:0 0 5px;font-size:25px;letter-spacing:-.6px}
 .intro{margin:0 0 19px;color:var(--muted);font-size:13px;line-height:1.45}
 label{display:block;font-size:12px;color:var(--muted);font-weight:bold}
@@ -65,13 +65,13 @@ input:focus{outline:2px solid var(--green);outline-offset:1px}
 .submit:active:not(:disabled){transform:scale(.985)}
 .msg{margin-top:14px;padding:12px 13px;border-radius:12px;font-size:12.5px;line-height:1.45}
 .msg[hidden]{display:none}
-.msg.error{background:var(--red-soft);color:#8d2f1e}
-.msg.info{background:var(--green-soft);color:#14603f}
+.msg.error{background:var(--red-soft);color:#a00010}
+.msg.info{background:var(--green-soft);color:#1a44c9}
 .hint{margin:16px 2px 0;color:var(--muted);font-size:11.5px;line-height:1.5}
-code{background:#eaeee9;border-radius:5px;padding:1px 5px;font-size:11px;word-break:break-all}
+code{background:#f2f2f7;border-radius:5px;padding:1px 5px;font-size:11px;word-break:break-all}
 @media(max-width:380px){.card{padding:18px}h1{font-size:22px}}
 </style>
-</head>
+<link rel="stylesheet" href="assets/theme.css?v=<?= $v('assets/theme.css') ?>"></head>
 <body>
 <div class="shell">
   <div class="brand"><img src="icon-192.png" alt=""><span><small>BUDGET JOSH</small><b>Vos budgets, vos objectifs.</b></span></div>

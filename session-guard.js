@@ -54,8 +54,8 @@
   const style = document.createElement('style');
   style.textContent = `
     header{position:relative}
-    .session-logout{position:absolute;right:16px;top:20px;z-index:10;min-height:36px;padding:7px 13px;border:1px solid #dbe2da;border-radius:99px;background:#fffefacc;color:#526b65;font:inherit;font-size:11px;font-weight:bold;cursor:pointer;backdrop-filter:blur(6px)}
-    .session-logout:active{transform:scale(.96);background:#f1f4ef}
+    .session-logout{position:absolute;right:16px;top:20px;z-index:10;min-height:36px;padding:7px 13px;border:1px solid #e5e5ea;border-radius:99px;background:#ffffffcc;color:#6e6e73;font:inherit;font-size:11px;font-weight:bold;cursor:pointer;backdrop-filter:blur(6px)}
+    .session-logout:active{transform:scale(.96);background:#f2f2f7}
     @media(max-width:600px){.session-logout{right:12px;top:16px}}
   `;
   document.head.append(style);

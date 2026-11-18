@@ -1,0 +1,118 @@
+/* Budget Josh : système visuel commun (lot 10, novembre 2026).
+   Chargé dans le <head> de chaque page. Certains écrans injectent leurs styles par JavaScript,
+   d'où les sélecteurs préfixés par « html body » qui gardent la priorité sans dépendre de l'ordre. */
+
+@font-face{font-family:"Inter";src:url("fonts/inter-var.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Manrope";src:url("fonts/manrope-var.woff2") format("woff2");font-weight:200 800;font-style:normal;font-display:swap}
+
+html:root{
+  --bg:#f5f5f7;--surface:#ffffff;--surface-2:#f2f2f7;--text:#1d1d1f;--text-2:#6e6e73;--text-3:#6e6e73;
+  --line:#e5e5ea;--line-strong:#c7c7cc;--accent:#2456f5;--accent-press:#1a44c9;--accent-soft:#eaf0ff;
+  --dogs:#c2700a;--dogs-soft:#fff4e5;--danger:#d70015;--danger-soft:#ffe9eb;--night:#0b1b3a;
+  --radius:20px;--radius-sm:14px;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.06);
+  --shadow-lift:0 2px 6px rgba(0,0,0,.05),0 18px 40px rgba(0,0,0,.10);
+  --font-text:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  --font-title:"Manrope","Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  /* Anciens noms encore utilisés par les écrans existants */
+  --ink:var(--text);--paper:var(--bg);--card:var(--surface);--muted:var(--text-2);--green:var(--accent);
+  --green-soft:var(--accent-soft);--pale:var(--accent-soft);--orange:var(--dogs);--red:var(--danger);--red-soft:var(--danger-soft);
+  color-scheme:light;
+}
+
+/* Base */
+html body{background:var(--bg)!important;background-image:none!important;color:var(--text);font-family:var(--font-text)!important;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+html body .art-bg{display:none!important}
+html body h1,html body h2,html body h3,html body .card-head b,html body .chip b,html body .metric b,html body .goal h2{font-family:var(--font-title);letter-spacing:-.02em;color:var(--text)}
+html body h1{font-size:clamp(28px,7vw,40px);font-weight:700;line-height:1.1}
+html body h2{font-weight:700}
+html body h3{font-weight:650}
+html body .ey{color:var(--accent);font-size:12px;font-weight:600;letter-spacing:.02em;text-transform:none}
+html body .intro{color:var(--text-2);font-size:15px;line-height:1.5}
+html body .empty{color:var(--text-2);font-size:14px}
+html body input,html body select,html body textarea{font-family:var(--font-text);font-size:16px;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:12px;transition:border-color .15s,box-shadow .15s}
+html body input:focus,html body select:focus,html body textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+html body label{color:var(--text-2);font-weight:600;font-size:13px}
+html body :focus-visible{outline:3px solid var(--accent-soft);outline-offset:2px}
+html body button{font-family:inherit}
+
+/* Boutons */
+html body .button,html body .submit,html body .drawer-actions .primary,html body .primary,html body .draft-submit{background:var(--accent)!important;color:#fff!important;border:0!important;border-radius:var(--radius-sm)!important;font-weight:600!important;box-shadow:0 1px 2px rgba(36,86,245,.25),0 6px 16px rgba(36,86,245,.18)!important;transition:background .15s,transform .12s}
+html body .button:hover,html body .submit:hover{background:var(--accent-press)!important}
+html body .button:active,html body .submit:active{transform:scale(.98)}
+html body .button.button-secondary,html body .export-button{background:var(--surface)!important;color:var(--accent)!important;box-shadow:none!important;border:1px solid var(--line)!important}
+html body .close{background:var(--surface-2)!important;color:var(--text-2)!important;border:0}
+
+/* Rangée des budgets */
+html body .overview{gap:10px;padding:6px 2px 10px;scroll-snap-type:x proximity;scroll-padding:0 16px}
+html body .chip{scroll-snap-align:start;background:var(--surface);border:1px solid transparent;border-radius:18px;padding:12px 14px;box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s,transform .12s}
+html body .chip b{font-size:15px;font-weight:700}
+html body .chip small{color:var(--text-2);font-size:12px}
+html body .chip.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),var(--shadow)}
+html body .chip:active{transform:scale(.98)}
+@media(max-width:719px){html body .overview{background:rgba(245,245,247,.82)!important;-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}}
+
+/* Cartes et feuilles */
+html body .card{background:var(--surface)!important;border:0!important;border-radius:24px!important;box-shadow:var(--shadow)!important}
+html body .card-head small,html body .card-total{color:var(--text-2)}
+html body .card-more,html body .more-btn,html body .more-entry{background:var(--surface-2)!important;color:var(--text)!important}
+html body .card-actions-menu,html body .entry-actions-menu,html body .menu{background:rgba(255,255,255,.96)!important;border:1px solid var(--line)!important;border-radius:16px!important;box-shadow:var(--shadow-lift)!important;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+html body .cat-head span:first-child{text-transform:none;letter-spacing:0;font-size:13px;font-weight:700}
+html body .cat-priority{border-left-color:var(--accent)}
+html body .cat-dogs{border-left-color:var(--dogs);background:var(--dogs-soft)}
+html body .cat-priority .cat-head span:first-child{color:var(--accent)}
+html body .cat-dogs .cat-head span:first-child{color:var(--dogs)}
+html body .entry b{font-weight:600;font-size:15px}
+html body .entry small{color:var(--text-2)}
+html body .entry-amount{font-variant-numeric:tabular-nums;font-weight:600}
+html body .nature-tag{background:var(--surface-2);color:var(--text-2);font-weight:600}
+html body .toggle{background:var(--surface-2);color:var(--text-2)}
+html body .realised .toggle{background:var(--accent);color:#fff}
+html body .add{color:var(--accent)!important;border-color:var(--line-strong)!important;background:transparent!important}
+html body .save{background:var(--accent)!important}
+html body .cancel-entry,html body .tool-del,html body .danger{color:var(--danger)!important}
+html body .restore{color:var(--accent)!important}
+
+/* Fenêtres et tiroirs */
+html body dialog{background:var(--surface);color:var(--text);border:0;border-radius:28px 28px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.12)}
+html body dialog::backdrop{background:rgba(0,0,0,.32);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+@media(min-width:720px){html body dialog:not(.drawer):not([class*="drawer"]){border-radius:28px;margin:auto}}
+html body .draft-backdrop{background:rgba(0,0,0,.32)!important}
+html body .draft{background:var(--surface)!important}
+
+/* Cartes d'objectifs, indicateurs et tableau de bord */
+html body .goal,html body .metric,html body .limit-box,html body .settings,html body .alerts>*,html body .expenses>*{background:var(--surface)!important;border:0!important;box-shadow:var(--shadow)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html body .goal{border-radius:24px!important}
+html body .goal-art,html body .drawer-art{background:var(--accent-soft)!important;color:var(--accent)}
+html body .goal-next{background:var(--surface-2)!important}
+html body .goal-next-icon{background:var(--accent)!important}
+html body .goal-category{color:var(--accent)!important;text-transform:none;letter-spacing:0;font-size:12px}
+html body .progress{background:var(--surface-2)!important;height:6px}
+html body .progress span{background:var(--accent)!important}
+html body .metric-icon{background:var(--accent-soft)!important;color:var(--accent)}
+html body .metric:nth-child(2) .metric-icon{background:var(--danger-soft)!important;color:var(--danger)}
+
+/* Navigation principale : barre d'onglets façon iOS */
+html body .app-nav-button{border:1px solid var(--line)!important;background:var(--surface)!important;color:var(--text-2)!important;border-radius:14px!important;font-weight:600}
+html body .app-nav-button[aria-current="page"]{background:var(--text)!important;border-color:var(--text)!important;color:#fff!important;box-shadow:none!important}
+@media(max-width:699px){
+  html body .app-nav{background:rgba(255,255,255,.82)!important;border-top:1px solid rgba(0,0,0,.06)!important;-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:none!important}
+  html body .app-nav-button{border:0!important;background:transparent!important;color:var(--text-3)!important;font-size:11px!important;font-weight:600}
+  html body .app-nav-button[aria-current="page"]{background:transparent!important;color:var(--accent)!important}
+}
+
+/* Logo dans l'en-tête */
+html body .brand-logo{width:52px!important;height:52px!important;border-radius:14px!important;box-shadow:0 4px 14px rgba(11,27,58,.18)!important}
+
+@media(prefers-reduced-motion:reduce){html body *{transition:none!important}}
+
+/* Actions secondaires de l'écran Budgets, côte à côte sous le bouton principal */
+html body .recurring-open,html body .export-button{display:inline-flex!important;align-items:center;justify-content:center;width:calc(50% - 4px)!important;min-height:48px;margin-top:8px!important;padding:10px 12px!important;font-size:14px!important;vertical-align:top}
+html body .recurring-open+.export-button,html body .export-button+.recurring-open{margin-left:8px!important}
+
+/* Rond de statut des dépenses, cohérent avec la coche des objectifs */
+@media(max-width:719px){
+  html body .entry:not(.realised) .toggle{background:transparent!important}
+  html body .entry:not(.realised) .toggle::before{content:""!important;display:block;width:26px;height:26px;box-sizing:border-box;border:2px solid var(--line-strong);border-radius:50%}
+  html body .realised .toggle::before{font-size:17px!important;font-weight:700}
+}
