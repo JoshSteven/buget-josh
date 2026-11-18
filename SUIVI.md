@@ -45,7 +45,7 @@ Décision de Josh (18 novembre) : tout traiter en un seul lot. La palette est à
 | 4 | Objectifs : coche ronde façon Rappels, animation, vibration, bandeau « Annuler » 5 s, prochaine action cochable depuis la carte | Fait, `008e653` et `0242f4b` | Tests Objectifs (10) + contrôle visuel 375 px et ordinateur |
 | 5 | Thème commun `assets/theme.css` : palette sans vert, Inter et Manrope locales, barre d'onglets givrée, boutons bleus, cache PWA v12 | Fait, `aa9cb86` | Captures des 4 écrans, Axe sans violation grave sur 5 pages |
 | 6 | Nouveau logo (option B choisie, avec « OSH » en indice et « budget » discret) et icônes PWA, cache v13 | Fait, voir `git log` | En-tête et connexion vérifiés à 375 px, icônes 192/512/maskable contrôlées |
-| 7 | Push GitHub puis déploiement cPanel | **En attente de l'accord de Josh** | SHA cPanel = SHA poussé, smoke test |
+| 7 | Push GitHub puis déploiement cPanel | Poussé le 18 novembre (`60b6c53`). **Déploiement cPanel à faire par Josh**, aucune migration. | SHA cPanel = SHA poussé, smoke test |
 
 Environnement de test local : serveur `php -S 127.0.0.1:8080` avec PHP 8.3 de Laragon (configuration dans `.claude/launch.json`, extensions passées en `-d` car ce PHP n'a pas de `php.ini`). Mot de passe local de test posé sur la base `budget_josh` : celui de `tests/global-setup.js`, à ne jamais utiliser en production. Sauvegarde de la base locale avant le lot : `database/backup_local_avant_lot10_2026-11-18.sql`.
 
