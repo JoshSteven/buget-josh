@@ -30,7 +30,7 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
 .journey-step.current .journey-node.check{background:var(--surface,#fff);border-color:var(--accent,#2456f5);box-shadow:0 0 0 4px var(--accent-soft,#dbe5ff)}
 .journey-step.done .journey-node.check{background:var(--accent,#2456f5);color:#fff}
 .journey-step.done .journey-copy strong{color:var(--text-2,#6e6e73);text-decoration:line-through;text-decoration-thickness:1px}
-.goal.has-check .goal-next{padding-right:62px}
+.goal.has-check .goal-next{padding-right:62px;grid-template-columns:36px minmax(0,1fr)}.goal-next>span{min-width:0}
 .goal-check{position:absolute;right:21px;bottom:21px;z-index:3;width:46px;height:46px;border-color:var(--accent,#2456f5);background:var(--surface,#fff)}
 .goal-toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));z-index:90;display:flex;align-items:center;gap:14px;max-width:min(92vw,460px);padding:10px 10px 10px 18px;border-radius:16px;background:rgba(29,29,31,.94);color:#fff;font-size:14px;box-shadow:0 12px 32px rgba(0,0,0,.22);transform:translate(-50%,20px);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
 .goal-toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
