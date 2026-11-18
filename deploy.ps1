@@ -11,7 +11,6 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
-$OutputEncoding = New-Object System.Text.UTF8Encoding $false  # sans BOM : bash refuserait la premiere ligne
 $Site = 'https://depensesjosh.brightlightmind.online'
 
 function Etape($texte) { Write-Host "`n>> $texte" -ForegroundColor Cyan }
@@ -39,8 +38,10 @@ $local = (git rev-parse --short HEAD).Trim()
 
 Etape ('Deploiement sur o2switch' + $(if ($Simuler) { ' (simulation)' } else { '' }))
 $script = (Get-Content -Raw -Encoding UTF8 'bin/remote-deploy.sh') -replace "`r", ''
-$arguments = if ($Simuler) { 'bash -s -- --dry-run' } else { 'bash -s' }
-$script | ssh -o BatchMode=yes budgetjosh $arguments
+# Le script voyage encode en base64 : PowerShell 5.1 ajoute sinon un caractere invisible (BOM) qui casse bash.
+$b64 = [Convert]::ToBase64String((New-Object System.Text.UTF8Encoding $false).GetBytes($script))
+$option = if ($Simuler) { ' --dry-run' } else { '' }
+ssh -o BatchMode=yes budgetjosh "echo $b64 | base64 -d | bash -s --$option"
 if ($LASTEXITCODE -ne 0) {
     Arret "le serveur a signale une erreur (code $LASTEXITCODE). Si la connexion est refusee, ton IP a peut-etre change : ajoute-la dans cPanel > Autorisation SSH."
 }
