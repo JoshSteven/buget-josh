@@ -3,7 +3,6 @@
   let initialLayoutApplied = false;
   let userSelectedBudget = false;
   let initialResetTimer = null;
-  let budgetRank = new Map();
   document.addEventListener('click', event => {
     if (event.target.closest('[data-budget-select]')) {
       userSelectedBudget = true;
@@ -74,45 +73,26 @@
     createButton.insertAdjacentElement('afterend', button);
   }
 
-  async function arrangeInitialBudgets() {
+  // L'ordre des budgets (le plus récent à gauche) est décidé par app-v6.js, seul responsable.
+  // Ici on garantit seulement qu'aucun budget n'est ouvert automatiquement au chargement.
+  function closeInitialBudget() {
     if (initialLayoutApplied) return;
     const overview = document.querySelector('#overview');
     const sheet = document.querySelector('#sheet');
     if (!overview || !sheet || !overview.querySelector('[data-budget-select]')) return;
-    if (initialLayoutApplied) {
-      [...overview.children]
-        .sort((a, b) => (budgetRank.get(a.dataset.budgetSelect) ?? 999) - (budgetRank.get(b.dataset.budgetSelect) ?? 999))
-        .forEach(element => overview.append(element));
-      [...sheet.querySelectorAll('[data-budget-card]')]
-        .sort((a, b) => (budgetRank.get(a.dataset.budgetCard) ?? 999) - (budgetRank.get(b.dataset.budgetCard) ?? 999))
-        .forEach(element => sheet.append(element));
-      return;
-    }
     initialLayoutApplied = true;
-    const data = await getData();
-    const order = data.budgets.slice().sort((a, b) =>
-      String(b.period_month || b.project_date).localeCompare(String(a.period_month || a.project_date)));
-    budgetRank = new Map(order.map((budget, index) => [budget.id, index]));
-    [...overview.children]
-      .sort((a, b) => (budgetRank.get(a.dataset.budgetSelect) ?? 999) - (budgetRank.get(b.dataset.budgetSelect) ?? 999))
-      .forEach(element => overview.append(element));
-    [...sheet.querySelectorAll('[data-budget-card]')]
-      .sort((a, b) => (budgetRank.get(a.dataset.budgetCard) ?? 999) - (budgetRank.get(b.dataset.budgetCard) ?? 999))
-      .forEach(element => sheet.append(element));
-    initialResetTimer = setTimeout(() => {
+    const reset = () => {
       if (userSelectedBudget) return;
       overview.querySelectorAll('.chip').forEach(element => element.classList.remove('active'));
       sheet.querySelectorAll('.card').forEach(element => element.classList.remove('active'));
-    }, 120);
-    if (!userSelectedBudget && !overview.querySelector('.chip.active')) {
-      overview.querySelectorAll('.chip').forEach(element => element.classList.remove('active'));
-      sheet.querySelectorAll('.card').forEach(element => element.classList.remove('active'));
-    }
+    };
+    reset();
+    initialResetTimer = setTimeout(reset, 120);
   }
 
   const observer = new MutationObserver(() => {
     addExportButton();
-    arrangeInitialBudgets().catch(() => {});
+    closeInitialBudget();
   });
   observer.observe(document.body, { childList: true, subtree: true });
   addExportButton();

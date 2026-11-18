@@ -10,8 +10,11 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 
     await expect(selectors.first()).not.toHaveClass(/active/);
     await selectors.first().click();
     await expect(page.locator('.card:visible')).toHaveCount(1);
+    const secondId = await selectors.nth(1).getAttribute('data-budget-select');
     await selectors.nth(1).click();
     await expect(page.locator('.card:visible')).toHaveCount(1);
-    await expect(page.locator('.card:visible .card-head b')).toHaveText('AuthentiqueRacine');
+    // L'ordre ne bouge plus après un clic : le budget touché reste au même rang et sa carte s'ouvre.
+    await expect(selectors.nth(1)).toHaveAttribute('data-budget-select', secondId);
+    await expect(page.locator('.card:visible')).toHaveAttribute('data-budget-card', secondId);
   });
 }
