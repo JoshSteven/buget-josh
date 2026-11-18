@@ -2,6 +2,7 @@
 declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
 require __DIR__ . '/auth.php';
+require __DIR__ . '/recurring-service.php';
 budgetRequireAuthApi();
 
 function recurringFail(string $message, int $status = 422): never
@@ -23,10 +24,11 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'list') {
         $rows = $pdo->query(
-            'SELECT r.id,r.budget_id,r.label,r.amount,r.bucket,r.nature,r.note,r.frequency,r.start_date,r.next_date,r.active,
-                    b.kind,b.name,b.period_month,b.project_date
-             FROM recurring_expenses r JOIN budgets b ON b.id=r.budget_id
-             ORDER BY r.active DESC,r.next_date ASC,r.created_at DESC'
+            "SELECT r.id,r.label,r.amount,r.bucket,r.nature,r.note,r.frequency,r.start_date,r.day_of_month,r.next_date,r.active,
+                    (SELECT COUNT(*) FROM recurring_expense_runs x WHERE x.recurring_id=r.id) AS generated_count,
+                    EXISTS(SELECT 1 FROM budgets b WHERE b.kind='grace' AND b.period_month=DATE_FORMAT(r.next_date,'%Y-%m')) AS grace_ready
+             FROM recurring_expenses r
+             ORDER BY r.active DESC,r.next_date ASC,r.created_at DESC"
         )->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode(['recurrences' => $rows], JSON_UNESCAPED_UNICODE);
         exit;
@@ -45,19 +47,18 @@ try {
             || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
             recurringFail('Libellé, montant, catégorie et date valides requis.');
         }
-        $budgetCheck = $pdo->prepare('SELECT COUNT(*) FROM budgets WHERE id=?');
-        $budgetCheck->execute([(string) ($data['budget_id'] ?? '')]);
-        if (!$budgetCheck->fetchColumn()) recurringFail('Budget introuvable.', 404);
         $pdo->prepare(
-            'INSERT INTO recurring_expenses(id,budget_id,label,amount,bucket,nature,note,frequency,start_date,day_of_month,next_date)
-             VALUES(?,?,?,?,?,?,?,"monthly",?,?,?)'
+            'INSERT INTO recurring_expenses(id,label,amount,bucket,nature,note,frequency,start_date,day_of_month,next_date)
+             VALUES(?,?,?,?,?,?,"monthly",?,?,?)'
         )->execute([
-            $data['id'], $data['budget_id'], $label, $amount, $bucket,
+            $data['id'], $label, $amount, $bucket,
             trim((string) ($data['nature'] ?? '')) ?: null,
             trim((string) ($data['note'] ?? '')) ?: null,
             $date, (int) date('j', strtotime($date)), $date,
         ]);
-        echo json_encode(['ok' => true]);
+        // Si la Grâce du mois existe déjà, la dépense apparaît tout de suite comme prévue.
+        $stats = budgetRecurringGenerate($pdo);
+        echo json_encode(['ok' => true, 'created' => $stats['created']]);
         exit;
     }
 
@@ -70,6 +71,7 @@ try {
     }
 
     if ($action === 'delete') {
+        $pdo->prepare('DELETE FROM recurring_expense_runs WHERE recurring_id=?')->execute([(string) ($data['id'] ?? '')]);
         $query = $pdo->prepare('DELETE FROM recurring_expenses WHERE id=?');
         $query->execute([(string) ($data['id'] ?? '')]);
         if (!$query->rowCount()) recurringFail('Récurrence introuvable.', 404);

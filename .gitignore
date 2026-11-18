@@ -10,6 +10,7 @@ database/*
 !database/lot-7-daily-goal-reminder.sql
 !database/lot-8-app-auth.sql
 !database/lot-9-recurring-expenses.sql
+!database/lot-11-recurring-monthly.sql
 # Bloque la lecture publique de database/ une fois le Basic Auth retire (lot 8).
 !database/.htaccess
 
