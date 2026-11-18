@@ -34,6 +34,68 @@
     return { label: `${days} jours restants`, short: `${days} j`, className: days <= 7 ? 'near' : '' };
   }
 
+  // Coche ronde façon Rappels : un seul geste pour terminer ou rouvrir une étape.
+  let justDoneId = null;
+  const checkSvg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 12.5 3.6 3.6 7.4-8.2"/></svg>';
+  function checkButton(task, className) {
+    const done = task.status === 'realised';
+    const label = (done ? 'Rouvrir l’étape « ' : 'Terminer l’étape « ') + task.title + ' »';
+    return `<button class="check ${className}${done ? ' is-done' : ''}${task.id === justDoneId ? ' pop' : ''}" type="button" data-status-task="${esc(task.id)}" data-next-status="${done ? 'planned' : 'realised'}" aria-pressed="${done}" aria-label="${esc(label)}" title="${done ? 'Rouvrir' : 'Terminer'}">${checkSvg}</button>`;
+  }
+
+  let toastTimer = null;
+  function toast(message, undo) {
+    let box = document.querySelector('#goalToast');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'goalToast';
+      box.className = 'goal-toast';
+      box.setAttribute('role', 'status');
+      box.setAttribute('aria-live', 'polite');
+      document.body.append(box);
+    }
+    box.innerHTML = '<span>' + esc(message) + '</span>' + (undo ? '<button type="button">Annuler</button>' : '');
+    if (undo) box.querySelector('button').onclick = () => { box.classList.remove('show'); undo(); };
+    box.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => box.classList.remove('show'), 5000);
+  }
+
+  async function setTaskStatus(id, status, silent = false) {
+    const task = state.tasks.find(item => item.id === id);
+    if (!task) return;
+    const previous = task.status;
+    task.status = status;
+    justDoneId = status === 'realised' ? id : null;
+    if (status === 'realised') navigator.vibrate?.(12);
+    render();
+    try {
+      await api('task_status', { id, status });
+      if (!silent) {
+        const tasks = tasksFor(task.track_id);
+        const finished = status === 'realised' && tasks.length && tasks.every(item => item.status === 'realised');
+        if (status === 'realised') toast(finished ? 'Objectif atteint. Bravo !' : '« ' + task.title + ' » terminée', () => setTaskStatus(id, previous, true));
+        else toast('« ' + task.title + ' » rouverte');
+      }
+    } catch (error) {
+      task.status = previous;
+      justDoneId = null;
+      render();
+      alert(error.message);
+    } finally {
+      setTimeout(() => { justDoneId = null; }, 700);
+    }
+  }
+
+  function wireChecks(scope = document) {
+    scope.querySelectorAll('[data-status-task]').forEach(button => {
+      button.onclick = event => {
+        event.stopPropagation();
+        setTaskStatus(button.dataset.statusTask, button.dataset.nextStatus);
+      };
+    });
+  }
+
   function menu(kind, id) {
     const goal = kind === 'track';
     return `<span class="more"><button class="more-btn" data-more="${kind}-${esc(id)}" aria-haspopup="menu" aria-expanded="false" aria-label="Actions ${goal ? 'de l’objectif' : 'de l’étape'}">…</button><span class="menu" data-menu="${kind}-${esc(id)}" role="menu" hidden><button data-edit-${kind}="${esc(id)}" role="menuitem">Modifier</button><button class="danger" data-delete-${kind}="${esc(id)}" role="menuitem">Supprimer</button></span></span>`;
@@ -56,13 +118,13 @@
       const info = next ? dayInfo(next) : null;
       const nextLabel = next ? next.title : tasks.length ? 'Objectif atteint' : 'Ajouter une première étape';
       const time = next ? `<strong>${esc(info.short)}</strong><span>${info.className === 'overdue' ? 'retard' : 'restants'}</span>` : `<strong>${progress === 100 && tasks.length ? '✓' : '0'}</strong><span>${tasks.length ? 'réussi' : 'étape'}</span>`;
-      return `<article class="goal" id="track-${esc(track.id)}">
+      return `<article class="goal${next ? ' has-check' : ''}" id="track-${esc(track.id)}">
         <button class="goal-open" type="button" data-open-track="${esc(track.id)}" aria-label="Ouvrir le plan : ${esc(track.title)}">
           <span class="goal-art" aria-hidden="true">${iconFor(track)}</span>
           <span class="goal-copy">${track.category ? `<span class="goal-category">${esc(track.category)}</span>` : ''}<h2>${esc(track.title)}</h2><span class="goal-progress-label">${tasks.filter(task => task.status === 'realised').length} étape${tasks.filter(task => task.status === 'realised').length > 1 ? 's' : ''} sur ${tasks.length}</span><span class="progress" role="progressbar" aria-label="Progression" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100"><span style="width:${progress}%"></span></span></span>
           <span class="goal-time ${info?.className || ''}">${time}</span>
           <span class="goal-next"><span class="goal-next-icon" aria-hidden="true">${progress === 100 && tasks.length ? icon('trophy', 22) : icon('next', 22)}</span><span><small>${progress === 100 && tasks.length ? 'Parcours terminé' : 'Prochaine action'}</small><strong>${esc(nextLabel)}</strong></span></span>
-        </button>${menu('track', track.id)}
+        </button>${menu('track', track.id)}${next ? checkButton(next, 'goal-check') : ''}
       </article>`;
     }).join('') : '<p class="empty">Créez votre premier objectif pour dessiner son chemin.</p>';
 
@@ -105,9 +167,9 @@
       if (current) currentFound = true;
       const info = dayInfo(task);
       return `<div class="journey-step ${done ? 'done' : current ? 'current' : ''} ${info.className}" id="task-${esc(task.id)}">
-        <span class="journey-node" aria-hidden="true">${done ? '✓' : index + 1}</span>
+        ${checkButton(task, 'journey-node')}
         <span class="journey-copy"><strong>${esc(task.title)}</strong><small>${esc(dateLabel(task.target_date))} · ${esc(done ? 'Terminée' : info.label)}</small></span>
-        <span class="journey-actions"><button class="status-btn" type="button" data-status-task="${esc(task.id)}" data-next-status="${done ? 'planned' : 'realised'}">${done ? 'Rouvrir' : 'Terminer'}</button>${menu('task', task.id)}</span>
+        <span class="journey-actions">${menu('task', task.id)}</span>
       </div>`;
     }).join('') : '<p class="empty">Le chemin est vide. Ajoutez une première étape simple.</p>';
 
@@ -177,6 +239,7 @@
 
   function wirePage() {
     wireMenus();
+    wireChecks($('#goals'));
     document.querySelectorAll('[data-open-track]').forEach(button => { button.onclick = () => openDrawer(button.dataset.openTrack); });
     document.querySelectorAll('[data-edit-track]').forEach(button => { button.onclick = () => openTrack(state.tracks.find(track => track.id === button.dataset.editTrack)); });
     document.querySelectorAll('[data-delete-track]').forEach(button => {
@@ -204,13 +267,7 @@
       if (next) drawer.querySelector(`#task-${CSS.escape(next.id)}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       else { drawer.close(); openTask(event.currentTarget.dataset.drawerNext); }
     };
-    drawer.querySelectorAll('[data-status-task]').forEach(button => {
-      button.onclick = async () => {
-        button.disabled = true;
-        try { await api('task_status', { id: button.dataset.statusTask, status: button.dataset.nextStatus }); await load(); }
-        catch (error) { alert(error.message); button.disabled = false; }
-      };
-    });
+    wireChecks(drawer);
     drawer.querySelectorAll('[data-edit-task]').forEach(button => {
       button.onclick = () => {
         const task = state.tasks.find(item => item.id === button.dataset.editTask);

@@ -56,11 +56,33 @@ test('la progression vient des étapes terminées et peut être annulée', async
   const goal = page.locator(`#track-${trackId}`);
   await goal.getByRole('button', { name: /Ouvrir le plan/ }).click();
   const drawer = page.getByRole('dialog', { name: 'AUDIT Permis de conduire' });
-  await drawer.getByRole('button', { name: 'Terminer' }).click();
+  await drawer.getByRole('button', { name: /^Terminer l’étape/ }).click();
   await expect(drawer.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100');
   await expect(drawer.getByText('Toutes les étapes sont terminées')).toBeVisible();
-  await drawer.getByRole('button', { name: 'Rouvrir' }).click();
+  await drawer.getByRole('button', { name: /^Rouvrir l’étape/ }).click();
   await expect(drawer.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
+});
+
+test('la prochaine action se coche depuis la carte et se rétablit avec Annuler', async ({ page }) => {
+  await page.goto('/objectives.php');
+  const goal = page.locator(`#track-${trackId}`);
+  const check = goal.locator('.goal-check');
+  await expect(check).toBeVisible();
+  const box = await check.boundingBox();
+  expect(box.width).toBeGreaterThanOrEqual(44);
+  await check.click();
+  await expect(goal.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100');
+  await expect(goal.locator('.goal-check')).toHaveCount(0);
+  const toast = page.locator('#goalToast');
+  await expect(toast).toContainText('Objectif atteint');
+  await toast.getByRole('button', { name: 'Annuler' }).click();
+  await expect(goal.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
+  await expect(goal.locator('.goal-check')).toBeVisible();
+  const status = await page.evaluate(async id => {
+    const data = await (await fetch('goals-v2-api.php')).json();
+    return data.tasks.filter(task => task.track_id === id).map(task => task.status);
+  }, trackId);
+  expect(status).toEqual(['planned']);
 });
 
 test('un rappel J-7 est généré une seule fois et peut être lu', async ({ request }) => {

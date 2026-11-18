@@ -16,6 +16,28 @@ $v = static fn(string $file): int => @filemtime(__DIR__ . '/' . $file) ?: time()
 .push-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.push-actions .secondary{background:var(--card);color:var(--ink);border:1px solid var(--line)}@media(max-width:380px){.push-actions{grid-template-columns:1fr}}
 @media(max-width:600px){.goal-next strong{white-space:normal;overflow-wrap:anywhere}}
 .goal-time{margin-right:48px}@media(max-width:350px){.goal-time{margin-right:0}}
+/* Lot 10 : coche ronde façon Rappels, coche rapide sur la carte et bandeau Annuler */
+.check{flex:0 0 auto;width:44px;height:44px;padding:0;border:2px solid var(--line-strong,#c7c7cc);border-radius:50%;background:var(--surface,#fff);color:transparent;display:grid;place-items:center;cursor:pointer;transition:background .18s,border-color .18s,transform .18s;-webkit-tap-highlight-color:transparent}
+.check svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset .25s ease .05s}
+.check:hover{border-color:var(--accent,#2456f5)}
+.check:active{transform:scale(.92)}
+.check:focus-visible{outline:3px solid var(--accent-soft,#dbe5ff);outline-offset:2px}
+.check.is-done{background:var(--accent,#2456f5);border-color:var(--accent,#2456f5);color:#fff}
+.check.is-done svg{stroke-dashoffset:0}
+.check.pop{animation:check-pop .42s cubic-bezier(.3,1.6,.5,1)}
+@keyframes check-pop{0%{transform:scale(.8)}55%{transform:scale(1.14)}100%{transform:scale(1)}}
+.journey-step .journey-node.check{width:40px;height:40px;margin-top:-1px;font-weight:400;box-shadow:none}
+.journey-step.current .journey-node.check{background:var(--surface,#fff);border-color:var(--accent,#2456f5);box-shadow:0 0 0 4px var(--accent-soft,#dbe5ff)}
+.journey-step.done .journey-node.check{background:var(--accent,#2456f5);color:#fff}
+.journey-step.done .journey-copy strong{color:var(--text-2,#6e6e73);text-decoration:line-through;text-decoration-thickness:1px}
+.goal.has-check .goal-next{padding-right:62px}
+.goal-check{position:absolute;right:21px;bottom:21px;z-index:3;width:46px;height:46px;border-color:var(--accent,#2456f5);background:var(--surface,#fff)}
+.goal-toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));z-index:90;display:flex;align-items:center;gap:14px;max-width:min(92vw,460px);padding:10px 10px 10px 18px;border-radius:16px;background:rgba(29,29,31,.94);color:#fff;font-size:14px;box-shadow:0 12px 32px rgba(0,0,0,.22);transform:translate(-50%,20px);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.goal-toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.goal-toast span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.goal-toast button{flex:0 0 auto;min-height:40px;padding:0 14px;border:0;border-radius:11px;background:rgba(255,255,255,.16);color:#8fb0ff;font-weight:600;cursor:pointer}
+@media(min-width:700px){.goal-toast{bottom:28px}}
+@media(prefers-reduced-motion:reduce){.check,.check svg,.goal-toast{transition:none}.check.pop{animation:none}}
 </style>
 <link rel="stylesheet" href="assets/vendor/lenis.css?v=<?= $v('assets/vendor/lenis.css') ?>">
 </head>
