@@ -36,6 +36,7 @@ Téléphone : barre fixe en bas à 4 icônes avec libellés courts et zone sûre
 - Statuts : `planned` (prévue), `realised` (réalisée), `cancelled` (annulée). Une dépense annulée reste visible mais est **exclue de tous les totaux**.
 - Une seule carte de budget est ouverte à la fois. Aucun budget n'est ouvert automatiquement au chargement.
 - Disponible réel = reçu moins réalisé. Disponible engagé = reçu moins réalisé moins prévu.
+- **Modifier un budget (lot 12)** : nom (Projet) ou mois (Grâce), et chaque paiement reçu (montant, libellé, date) ; ajout et suppression de paiement, jamais du dernier. **Décision de Josh du 18 novembre (option A) : la dîme liée suit automatiquement** (10 % du nouveau montant), même déjà réalisée, et la feuille l'annonce avant d'enregistrer. Le lien est `entries.payment_id`.
 
 ### Nature analytique (facultative)
 - Deuxième niveau libre et indépendant de la catégorie. **Ne jamais coder de correspondance nature vers catégorie.**

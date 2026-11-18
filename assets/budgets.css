@@ -136,3 +136,30 @@ header,main{max-width:560px}
 .draft-submit{display:block!important;grid-column:span 2!important;min-height:48px!important;border:0;border-radius:12px;background:var(--green)!important;color:#fff!important;font-weight:bold;cursor:pointer}
 .draft-error{grid-column:span 2;margin:0;min-height:1em;color:#d70015;font-size:13px}
 #budgetError{grid-column:auto}
+/* Lot 12 : feuille « Modifier le budget » */
+.edit-budget{max-height:min(92vh,820px);overflow:auto;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;box-sizing:border-box}
+.edit-budget:not([open]){display:none}
+.edit-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.edit-head h2{margin:2px 0 0;font-size:20px}
+.edit-head .close{position:static;flex:0 0 auto}
+.edit-section{margin:8px 0 0;font-size:15px}
+.pay-list{display:grid;gap:10px}
+.pay-row{padding:12px;border-radius:16px;background:var(--surface-2,#f2f2f7)}
+.pay-row.removed{opacity:.55}
+.pay-row.removed input{text-decoration:line-through}
+.pay-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pay-fields label:nth-child(2){grid-column:span 2;order:-1}
+.pay-fields input{margin-top:4px}
+.pay-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
+.pay-tithe{color:var(--text-2,#6e6e73);font-size:13px}
+.pay-tithe b{color:var(--text,#1d1d1f)}
+.pay-remove{min-height:40px;border:0;border-radius:10px;padding:0 12px;background:var(--surface,#fff);color:var(--danger,#d70015);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.pay-row.removed .pay-remove{color:var(--accent,#2456f5)}
+.edit-warn{display:block;margin-top:6px;color:var(--dogs,#c2700a);font-size:12px;font-weight:600}
+.pay-add{min-height:46px;border:1px dashed var(--line-strong,#c7c7cc);border-radius:14px;background:transparent;color:var(--accent,#2456f5);font:inherit;font-weight:600;cursor:pointer}
+.edit-recap{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px;border-radius:16px;background:var(--accent-soft,#eaf0ff)}
+.edit-recap span{display:grid;gap:2px;font-size:12px;color:var(--text-2,#6e6e73)}
+.edit-recap b{font-size:15px;color:var(--text,#1d1d1f);font-variant-numeric:tabular-nums}
+@media(max-width:400px){.edit-recap b{font-size:13px}}
+.edit-budget .draft-error{grid-column:auto}
+.pay-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.pay-fields input{min-width:0;width:100%}

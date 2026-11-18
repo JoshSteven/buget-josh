@@ -6,6 +6,8 @@ declare(strict_types=1);
  * GET  ?action=bootstrap        budgets, dépenses, paiements et totaux calculés par le serveur
  * POST ?action=budget           nouveau budget (Grâce ou Projet) + premier paiement + dîme 10 %
  * POST ?action=payment          paiement supplémentaire + dîme 10 %
+ * POST ?action=payment_update   correction d'un paiement ; la dîme liée suit (10 %)
+ * POST ?action=payment_delete   suppression d'un paiement et de sa dîme (jamais le dernier)
  * POST ?action=expense          nouvelle dépense
  * POST ?action=expense_update   libellé et montant d'une dépense
  * POST ?action=budget_label     nom d'un Projet
@@ -31,7 +33,7 @@ try {
              GROUP BY b.id ORDER BY COALESCE(b.period_month,b.project_date) DESC,b.created_at DESC"
         )->fetchAll();
         $expenses = $pdo->query(
-            "SELECT id,budget_id,type,amount,label,note,bucket,nature,status,source,DATE_FORMAT(entry_date,'%Y-%m-%d') date
+            "SELECT id,budget_id,payment_id,type,amount,label,note,bucket,nature,status,source,DATE_FORMAT(entry_date,'%Y-%m-%d') date
              FROM entries ORDER BY entry_date DESC,created_at DESC"
         )->fetchAll();
         $payments = $pdo->query(
@@ -49,11 +51,16 @@ try {
         $q->execute($kind ? [$id, $kind] : [$id]);
         return (bool) $q->fetchColumn();
     };
-    $addTithe = static function (string $budgetId, float $amount, string $label, string $date) use ($pdo, $d): void {
+    $addTithe = static function (string $budgetId, string $paymentId, float $amount, string $label, string $date) use ($pdo, $d): void {
         $pdo->prepare(
-            "INSERT INTO entries(id,budget_id,type,amount,label,bucket,status,entry_date,source)
-             VALUES(?,?,'expense',?,?,'tithe','planned',?,'budget')"
-        )->execute([budgetId($d, 'tithe_id'), $budgetId, round($amount * .1), 'Dîme — ' . $label, $date]);
+            "INSERT INTO entries(id,budget_id,payment_id,type,amount,label,bucket,status,entry_date,source)
+             VALUES(?,?,?,'expense',?,?,'tithe','planned',?,'budget')"
+        )->execute([budgetId($d, 'tithe_id'), $budgetId, $paymentId, round($amount * .1), 'Dîme — ' . $label, $date]);
+    };
+    $paymentRow = static function (string $id) use ($pdo): array {
+        $q = $pdo->prepare('SELECT id,budget_id,amount,label FROM budget_payments WHERE id=?');
+        $q->execute([$id]);
+        return $q->fetch() ?: budgetFail('Paiement introuvable.', 404);
     };
 
     switch ($action) {
@@ -72,9 +79,10 @@ try {
             $pdo->beginTransaction();
             $pdo->prepare('INSERT INTO budgets(id,kind,name,period_month,project_date) VALUES(?,?,?,?,?)')
                 ->execute([$id, $kind, $name, $month, $projectDate]);
+            $paymentId = budgetId($d, 'payment_id');
             $pdo->prepare('INSERT INTO budget_payments(id,budget_id,amount,label,payment_date) VALUES(?,?,?,?,?)')
-                ->execute([budgetId($d, 'payment_id'), $id, $amount, $paymentLabel, $paymentDate]);
-            $addTithe($id, $amount, $paymentLabel, $paymentDate);
+                ->execute([$paymentId, $id, $amount, $paymentLabel, $paymentDate]);
+            $addTithe($id, $paymentId, $amount, $paymentLabel, $paymentDate);
             $pdo->commit();
             $created = $kind === 'grace' ? budgetRecurringGenerate($pdo)['created'] : 0;
             budgetJson(['ok' => true, 'recurring_created' => $created]);
@@ -87,9 +95,44 @@ try {
             $label = budgetText($d, 'label', 180);
             $date = budgetDate($d, 'payment_date');
             $pdo->beginTransaction();
+            $paymentId = budgetId($d);
             $pdo->prepare('INSERT INTO budget_payments(id,budget_id,amount,label,payment_date) VALUES(?,?,?,?,?)')
-                ->execute([budgetId($d), $budgetId, $amount, $label, $date]);
-            $addTithe($budgetId, $amount, $label, $date);
+                ->execute([$paymentId, $budgetId, $amount, $label, $date]);
+            $addTithe($budgetId, $paymentId, $amount, $label, $date);
+            $pdo->commit();
+            budgetJson(['ok' => true]);
+        }
+
+        case 'payment_update': {
+            // Correction d'un paiement reçu. Décision de Josh (18 novembre 2026, option A) :
+            // la dîme liée suit automatiquement (10 % du nouveau montant, même libellé et même date).
+            $payment = $paymentRow(budgetId($d));
+            $amount = budgetAmount($d);
+            $label = budgetText($d, 'label', 180);
+            $date = budgetDate($d, 'payment_date');
+            $tithe = $pdo->prepare("SELECT id,amount,status FROM entries WHERE payment_id=? AND bucket='tithe' LIMIT 1");
+            $tithe->execute([$payment['id']]);
+            $linked = $tithe->fetch() ?: null;
+            $pdo->beginTransaction();
+            $pdo->prepare('UPDATE budget_payments SET amount=?,label=?,payment_date=? WHERE id=?')->execute([$amount, $label, $date, $payment['id']]);
+            if ($linked) {
+                $pdo->prepare('UPDATE entries SET amount=?,label=?,entry_date=? WHERE id=?')
+                    ->execute([round($amount * .1), 'Dîme — ' . $label, $date, $linked['id']]);
+            }
+            $pdo->commit();
+            budgetJson(['ok' => true, 'tithe' => $linked ? [
+                'before' => (float) $linked['amount'], 'after' => round($amount * .1), 'status' => $linked['status'],
+            ] : null]);
+        }
+
+        case 'payment_delete': {
+            $payment = $paymentRow(budgetId($d));
+            $count = $pdo->prepare('SELECT COUNT(*) FROM budget_payments WHERE budget_id=?');
+            $count->execute([$payment['budget_id']]);
+            if ((int) $count->fetchColumn() <= 1) budgetFail('Un budget garde au moins un paiement. Pour tout effacer, supprime le budget.');
+            $pdo->beginTransaction();
+            $pdo->prepare("DELETE FROM entries WHERE payment_id=? AND bucket='tithe'")->execute([$payment['id']]);
+            $pdo->prepare('DELETE FROM budget_payments WHERE id=?')->execute([$payment['id']]);
             $pdo->commit();
             budgetJson(['ok' => true]);
         }

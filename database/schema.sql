@@ -1,4 +1,4 @@
--- Structure de référence de la base Budget Josh (sans aucune donnée), état après le lot 11.
+-- Structure de référence de la base Budget Josh (sans aucune donnée), état après le lot 12.
 -- Sert à créer la base de test (tests/reset-test-db.php). Les migrations restent la référence pour la production.
 SET FOREIGN_KEY_CHECKS=0;
 
@@ -80,6 +80,7 @@ CREATE TABLE `budgets` (
 CREATE TABLE `entries` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `budget_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `payment_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `type` enum('income','expense') COLLATE utf8mb4_unicode_ci NOT NULL,
   `amount` decimal(12,2) NOT NULL,
   `label` varchar(160) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -93,6 +94,7 @@ CREATE TABLE `entries` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `fk_entry_budget` (`budget_id`),
+  KEY `entries_payment` (`payment_id`),
   KEY `entries_goal_task_fk` (`goal_task_id`),
   CONSTRAINT `entries_goal_task_fk` FOREIGN KEY (`goal_task_id`) REFERENCES `goal_tasks` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_entry_budget` FOREIGN KEY (`budget_id`) REFERENCES `budgets` (`id`) ON DELETE CASCADE

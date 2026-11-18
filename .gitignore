@@ -11,6 +11,7 @@ database/*
 !database/lot-8-app-auth.sql
 !database/lot-9-recurring-expenses.sql
 !database/lot-11-recurring-monthly.sql
+!database/lot-12-payment-tithe-link.sql
 !database/schema.sql
 # Bloque la lecture publique de database/ une fois le Basic Auth retire (lot 8).
 !database/.htaccess

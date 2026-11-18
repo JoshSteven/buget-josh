@@ -246,19 +246,153 @@
     try { await api('', { id, status }, 'update-status.php'); await load(); } catch (e) { alert(e.message); }
   }
 
-  async function editBudget(id) {
+  /*
+   * Feuille « Modifier le budget » (lot 12). Identité (nom ou mois) et argent reçu :
+   * chaque paiement se corrige, s'ajoute ou se supprime. Décision de Josh (option A) :
+   * la dîme liée suit automatiquement, et la feuille l'annonce avant d'enregistrer.
+   */
+  function editBudget(id) {
     const budget = state.db.budgets.find(b => b.id === id);
     if (!budget) return;
-    try {
-      if (budget.kind === 'project') {
-        const name = prompt('Nouveau libellé du projet :', budget.name);
-        if (name) await api('budget_label', { id, name });
-      } else {
-        const month = prompt('Mois couvert (AAAA-MM) :', budget.period_month);
-        if (month) await api('budget_month', { id, month });
+    const t = totalsFor(budget);
+    const titheOf = paymentId => state.db.expenses.find(e => e.payment_id === paymentId && e.bucket === 'tithe');
+    const payments = state.db.payments.filter(p => p.budget_id === id).map(p => ({
+      ...p, amount: Number(p.amount), original: { amount: Number(p.amount), label: p.label, date: p.date }, tithe: titheOf(p.id), removed: false, isNew: false,
+    }));
+
+    const sheet = document.createElement('dialog');
+    sheet.className = 'edit-budget';
+    sheet.setAttribute('aria-labelledby', 'editBudgetTitle');
+    document.body.append(sheet);
+
+    const tenth = value => Math.round((Number(value) || 0) * .1);
+
+    function rowFoot(p, i) {
+      const before = p.tithe ? Number(p.tithe.amount) : null;
+      const after = tenth(p.amount);
+      const line = p.removed ? 'Ce paiement et sa dîme seront supprimés.'
+        : p.isNew ? `Nouvelle dîme : ${money(after)}`
+        : before === null ? 'Aucune dîme reliée à ce paiement.'
+        : before !== after ? `Dîme : ${money(before)} → <b>${money(after)}</b>` : `Dîme : ${money(before)}`;
+      const canRemove = p.removed || payments.filter(x => !x.removed).length > 1;
+      const warn = !p.removed && p.tithe?.status === 'realised' && before !== after
+        ? '<small class="edit-warn">Cette dîme était déjà marquée réalisée : son montant sera ajusté.</small>' : '';
+      return `<div class="pay-foot"><small class="pay-tithe">${line}</small>${canRemove
+        ? `<button type="button" class="pay-remove" data-remove-row="${i}">${p.removed ? 'Garder' : 'Supprimer'}</button>` : ''}</div>${warn}`;
+    }
+
+    function row(p, i) {
+      const off = p.removed ? 'disabled' : '';
+      return `<div class="pay-row ${p.removed ? 'removed' : ''}" data-row="${i}"><div class="pay-fields">
+        <label>Montant reçu<input type="number" min="1" inputmode="numeric" data-pay="amount" value="${esc(p.amount)}" ${off}></label>
+        <label>Libellé<input data-pay="label" maxlength="180" value="${esc(p.label)}" ${off}></label>
+        <label>Date<input type="date" data-pay="date" value="${esc(p.date)}" ${off}></label></div>
+        <div class="pay-extra">${rowFoot(p, i)}</div></div>`;
+    }
+
+    function recap() {
+      const live = payments.filter(p => !p.removed);
+      const received = live.reduce((n, p) => n + (Number(p.amount) || 0), 0);
+      let realised = t.realised;
+      payments.forEach(p => {
+        if (p.tithe?.status === 'realised') realised += (p.removed ? 0 : tenth(p.amount)) - Number(p.tithe.amount);
+      });
+      return `<div class="edit-recap"><span>Reçu<b>${money(received)}</b></span>
+        <span>Dîme<b>${money(live.reduce((n, p) => n + tenth(p.amount), 0))}</b></span>
+        <span>Disponible<b>${money(received - realised)}</b></span></div>`;
+    }
+
+    function draw() {
+      const name = sheet.querySelector('#editName')?.value;
+      const month = sheet.querySelector('#editMonth')?.value;
+      sheet.innerHTML = `<div class="edit-head"><div><p class="ey">Modifier le budget</p><h2 id="editBudgetTitle">${esc(budgetLabel(budget))}</h2></div>
+        <button type="button" class="close" data-edit-close aria-label="Fermer">×</button></div>
+        ${budget.kind === 'project'
+          ? `<label>Nom du projet<input id="editName" maxlength="160" value="${esc(name ?? budget.name)}"></label>`
+          : `<label>Mois couvert<input id="editMonth" type="month" min="2026-06" value="${esc(month ?? budget.period_month)}"></label>`}
+        <h3 class="edit-section">Argent reçu</h3>
+        <div class="pay-list">${payments.map(row).join('')}</div>
+        <button type="button" class="pay-add" data-pay-add>+ Ajouter un paiement</button>
+        ${recap()}
+        <button type="button" class="button" data-edit-save>Enregistrer les modifications</button>
+        <p class="draft-error" role="status"></p>`;
+    }
+
+    // Pendant la saisie, seuls la ligne de dîme et le récapitulatif se mettent à jour : les champs ne sont pas redessinés.
+    sheet.addEventListener('input', event => {
+      const field = event.target.dataset.pay;
+      const rowEl = event.target.closest('[data-row]');
+      if (!field || !rowEl) return;
+      const index = Number(rowEl.dataset.row);
+      payments[index][field] = event.target.value;
+      rowEl.querySelector('.pay-extra').innerHTML = rowFoot(payments[index], index);
+      sheet.querySelector('.edit-recap').outerHTML = recap();
+    });
+
+    sheet.addEventListener('click', async event => {
+      const button = event.target.closest('button');
+      if (!button) return;
+      const d = button.dataset;
+      if ('editClose' in d) { sheet.close(); return; }
+      if ('removeRow' in d) {
+        const p = payments[Number(d.removeRow)];
+        if (p.isNew) payments.splice(payments.indexOf(p), 1); else p.removed = !p.removed;
+        draw();
+        return;
       }
-      await load();
-    } catch (e) { alert(e.message); }
+      if ('payAdd' in d) {
+        payments.push({ id: crypto.randomUUID(), budget_id: id, amount: '', label: '', date: today(), isNew: true, removed: false, tithe: null });
+        draw();
+        sheet.querySelector(`[data-row="${payments.length - 1}"] [data-pay="amount"]`)?.focus();
+        return;
+      }
+      if ('editSave' in d) await save(button);
+    });
+
+    async function save(button) {
+      const error = sheet.querySelector('.draft-error');
+      error.textContent = '';
+      const live = payments.filter(p => !p.removed);
+      if (live.some(p => !(Number(p.amount) > 0) || !String(p.label).trim() || !p.date)) {
+        error.textContent = 'Chaque paiement doit avoir un montant positif, un libellé et une date.';
+        return;
+      }
+      const removed = payments.filter(p => p.removed && !p.isNew);
+      if (removed.length) {
+        const ok = await confirmAction({
+          title: removed.length > 1 ? `Supprimer ${removed.length} paiements ?` : `Supprimer « ${removed[0].original.label} » ?`,
+          message: 'Le paiement et sa dîme seront effacés. Les autres dépenses du budget ne bougent pas.',
+          confirmLabel: 'Supprimer et enregistrer',
+        });
+        if (!ok) return;
+      }
+      button.disabled = true;
+      try {
+        const name = sheet.querySelector('#editName')?.value.trim();
+        const month = sheet.querySelector('#editMonth')?.value;
+        if (budget.kind === 'project' && name && name !== budget.name) await api('budget_label', { id, name });
+        if (budget.kind === 'grace' && month && month !== budget.period_month) await api('budget_month', { id, month });
+        for (const p of removed) await api('payment_delete', { id: p.id });
+        for (const p of live) {
+          const label = String(p.label).trim();
+          if (p.isNew) {
+            await api('payment', { id: p.id, budget_id: id, amount: Number(p.amount), label, payment_date: p.date, tithe_id: crypto.randomUUID() });
+          } else if (Number(p.amount) !== p.original.amount || label !== p.original.label || p.date !== p.original.date) {
+            await api('payment_update', { id: p.id, amount: Number(p.amount), label, payment_date: p.date });
+          }
+        }
+        sheet.close();
+        await load();
+      } catch (e) {
+        error.textContent = e.message;
+        button.disabled = false;
+        await load();
+      }
+    }
+
+    sheet.addEventListener('close', () => sheet.remove());
+    draw();
+    sheet.showModal();
   }
 
   async function deleteBudget(id) {
