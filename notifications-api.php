@@ -35,12 +35,7 @@ function vapidSettings(array $config, array $notificationConfig): array
 try {
     $config = require __DIR__ . '/config.php';
     $notificationConfig = is_file(__DIR__ . '/notification-secrets.php') ? require __DIR__ . '/notification-secrets.php' : [];
-    $pdo = new PDO(
-        "mysql:host={$config['host']};dbname={$config['database']};charset=utf8mb4",
-        $config['username'],
-        $config['password'],
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
+    $pdo = budgetDb();
     $action = (string) ($_GET['action'] ?? 'reminders');
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {

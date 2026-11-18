@@ -22,7 +22,7 @@ function limitsBody(): array
 
 try {
     $config = require __DIR__ . '/config.php';
-    $pdo = new PDO("mysql:host={$config['host']};dbname={$config['database']};charset=utf8mb4", $config['username'], $config['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    $pdo = budgetDb();
     $pdo->exec("CREATE TABLE IF NOT EXISTS budget_limits (
         bucket ENUM('priority','dogs') NOT NULL PRIMARY KEY,
         mode ENUM('fixed','percent') NOT NULL DEFAULT 'fixed',

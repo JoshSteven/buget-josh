@@ -9,6 +9,8 @@ declare(strict_types=1);
 // Principe : mot de passe unique + session longue durée sur l'appareil de confiance.
 // Le mot de passe n'existe qu'en hash, le jeton de session qu'en SHA-256.
 
+require_once __DIR__ . '/lib/bootstrap.php';
+
 const BUDGET_SESSION_COOKIE = 'bj_session';
 const BUDGET_SESSION_DAYS = 90;
 const BUDGET_MAX_ATTEMPTS = 8;
@@ -16,16 +18,7 @@ const BUDGET_ATTEMPT_WINDOW_MINUTES = 15;
 
 function budgetAuthPdo(): PDO
 {
-    static $pdo = null;
-    if ($pdo instanceof PDO) return $pdo;
-    $config = require __DIR__ . '/config.php';
-    $pdo = new PDO(
-        "mysql:host={$config['host']};dbname={$config['database']};charset=utf8mb4",
-        $config['username'],
-        $config['password'],
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
-    return $pdo;
+    return budgetDb();
 }
 
 function budgetIsHttps(): bool
@@ -207,6 +200,7 @@ function budgetRequireAuthPage(): void
 function budgetRequireAuthApi(): void
 {
     budgetNoStore();
+    budgetRequireSameOrigin();
     if (budgetSessionIsValid()) return;
     http_response_code(401);
     header('Content-Type: application/json; charset=utf-8');

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/lib/bootstrap.php';
+
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
     exit;
@@ -9,12 +11,7 @@ if (PHP_SAPI !== 'cli') {
 require_once __DIR__ . '/goal-reminder-service.php';
 $config = require __DIR__ . '/config.php';
 $notificationConfig = is_file(__DIR__ . '/notification-secrets.php') ? require __DIR__ . '/notification-secrets.php' : [];
-$pdo = new PDO(
-    "mysql:host={$config['host']};dbname={$config['database']};charset=utf8mb4",
-    $config['username'],
-    $config['password'],
-    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-);
+$pdo = budgetDb();
 
 $created = materializeGoalReminders($pdo);
 $dryRun = in_array('--dry-run', $argv, true);

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/lib/bootstrap.php';
+
 // Cron quotidien (20 h heure serveur) : génère les occurrences dues dans la Grâce de chaque mois.
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
@@ -9,12 +11,7 @@ if (PHP_SAPI !== 'cli') {
 
 require __DIR__ . '/recurring-service.php';
 $config = require __DIR__ . '/config.php';
-$pdo = new PDO(
-    "mysql:host={$config['host']};dbname={$config['database']};charset=utf8mb4",
-    $config['username'],
-    $config['password'],
-    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-);
+$pdo = budgetDb();
 $dryRun = in_array('--dry-run', $argv, true);
 $stats = budgetRecurringGenerate($pdo, $dryRun);
 

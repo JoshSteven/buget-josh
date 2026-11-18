@@ -14,12 +14,7 @@ function recurringFail(string $message, int $status = 422): never
 
 try {
     $config = require __DIR__ . '/config.php';
-    $pdo = new PDO(
-        "mysql:host={$config['host']};dbname={$config['database']};charset=utf8mb4",
-        $config['username'],
-        $config['password'],
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
+    $pdo = budgetDb();
     $action = $_GET['action'] ?? '';
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'list') {

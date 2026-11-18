@@ -61,12 +61,7 @@ function goalTrackPayload(array $data, ?array $current = null): array
 
 try {
     $config = require __DIR__ . '/config.php';
-    $pdo = new PDO(
-        "mysql:host={$config['host']};dbname={$config['database']};charset=utf8mb4",
-        $config['username'],
-        $config['password'],
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
+    $pdo = budgetDb();
     $action = (string) ($_GET['action'] ?? '');
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {

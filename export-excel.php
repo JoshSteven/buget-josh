@@ -8,6 +8,7 @@ declare(strict_types=1);
  */
 
 require __DIR__ . '/auth.php';
+require __DIR__ . '/lib/budget-totals.php';
 budgetRequireAuthPage();
 require __DIR__ . '/vendor/autoload.php';
 
@@ -26,12 +27,7 @@ const XL_LINE = 'E5E5EA';
 const XL_MONEY = '#,##0 "F CFA";-#,##0 "F CFA";"-"';
 
 $config = require __DIR__ . '/config.php';
-$pdo = new PDO(
-    "mysql:host={$config['host']};dbname={$config['database']};charset=utf8mb4",
-    $config['username'],
-    $config['password'],
-    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-);
+$pdo = budgetDb();
 
 $months = ['', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 $monthLabel = static function (string $ym) use ($months): string {
@@ -65,21 +61,31 @@ foreach ($budgets as $b) {
 $category = static fn(string $bucket): string => $bucket === 'dogs' ? 'Petits chiens' : 'Priorités';
 $statusLabel = ['realised' => 'Réalisée', 'planned' => 'Prévue', 'cancelled' => 'Annulée'];
 
-// Agrégats (annulées exclues)
+// Agrégats : moteur de calcul unique (lib/budget-totals.php), annulées exclues
+$totals = budgetTotals($pdo);
 $agg = [];
 $natures = [];
 foreach ($budgets as $b) {
-    $agg[$b['id']] = ['realised' => 0.0, 'planned' => 0.0, 'Priorités' => [0.0, 0.0], 'Petits chiens' => [0.0, 0.0]];
-}
-foreach ($entries as $e) {
-    if ($e['status'] === 'cancelled' || !isset($agg[$e['budget_id']])) continue;
-    $amount = (float) $e['amount'];
-    $isDone = $e['status'] === 'realised';
-    $agg[$e['budget_id']][$isDone ? 'realised' : 'planned'] += $amount;
-    $agg[$e['budget_id']][$category($e['bucket'])][$isDone ? 0 : 1] += $amount;
-    $nature = $e['nature'] ?: 'Sans nature';
-    $natures[$nature] ??= [0.0, 0.0];
-    $natures[$nature][$isDone ? 0 : 1] += $amount;
+    $t = $totals[$b['id']];
+    $agg[$b['id']] = [
+        'realised' => $t['realised'], 'planned' => $t['planned'],
+        'Priorités' => [$t['priority']['realised'], $t['priority']['planned']],
+        'Petits chiens' => [$t['dogs']['realised'], $t['dogs']['planned']],
+    ];
+    $withNature = [0.0, 0.0];
+    foreach ($t['natures'] as $name => $n) {
+        $natures[$name] ??= [0.0, 0.0];
+        $natures[$name][0] += $n['realised'];
+        $natures[$name][1] += $n['planned'];
+        $withNature[0] += $n['realised'];
+        $withNature[1] += $n['planned'];
+    }
+    $rest = [$t['realised'] - $withNature[0], $t['planned'] - $withNature[1]];
+    if ($rest[0] > 0 || $rest[1] > 0) {
+        $natures['Sans nature'] ??= [0.0, 0.0];
+        $natures['Sans nature'][0] += $rest[0];
+        $natures['Sans nature'][1] += $rest[1];
+    }
 }
 
 // Mise en forme commune
