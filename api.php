@@ -4,7 +4,7 @@ declare(strict_types=1);
 /*
  * API principale de l'écran Budgets.
  * GET  ?action=bootstrap        budgets, dépenses, paiements et totaux calculés par le serveur
- * POST ?action=budget           nouveau budget (Grâce ou Projet) + premier paiement + dîme 10 %
+ * POST ?action=budget           nouveau budget (Grâce, Projet ou Tontine) + premier paiement + dîme 10 % (jamais pour une Tontine)
  * POST ?action=payment          paiement supplémentaire + dîme 10 %
  * POST ?action=payment_update   correction d'un paiement ; la dîme liée suit (10 %)
  * POST ?action=payment_delete   suppression d'un paiement et de sa dîme (jamais le dernier)
@@ -51,7 +51,12 @@ try {
         $q->execute($kind ? [$id, $kind] : [$id]);
         return (bool) $q->fetchColumn();
     };
+    // Dîme de 10 % sur chaque paiement reçu, sauf pour une Tontine (épargne) : décision de Josh du 24 novembre 2026,
+    // c'est le seul cas sans dîme et il n'y a pas d'option. La règle est appliquée ici, côté serveur.
     $addTithe = static function (string $budgetId, string $paymentId, float $amount, string $label, string $date) use ($pdo, $d): void {
+        $kind = $pdo->prepare('SELECT kind FROM budgets WHERE id=?');
+        $kind->execute([$budgetId]);
+        if ($kind->fetchColumn() === 'tontine') return;
         $pdo->prepare(
             "INSERT INTO entries(id,budget_id,payment_id,type,amount,label,bucket,status,entry_date,source)
              VALUES(?,?,?,'expense',?,?,'tithe','planned',?,'budget')"
@@ -66,10 +71,10 @@ try {
     switch ($action) {
         case 'budget': {
             $kind = (string) ($d['kind'] ?? '');
-            if (!in_array($kind, ['grace', 'project'], true)) budgetFail('Type de budget invalide.');
+            if (!in_array($kind, ['grace', 'project', 'tontine'], true)) budgetFail('Type de budget invalide.');
             $id = budgetId($d);
             $month = $kind === 'grace' ? budgetMonth($d, 'period_month') : null;
-            $projectDate = $kind === 'project' ? budgetDate($d, 'project_date') : null;
+            $projectDate = $kind !== 'grace' ? budgetDate($d, 'project_date') : null;
             if (($month ?? substr((string) $projectDate, 0, 7)) < BUDGET_FIRST_MONTH) budgetFail('Les budgets commencent en juin 2026.');
             $name = $kind === 'grace' ? 'Grâce ' . $month : budgetText($d, 'name', 160);
             $amount = budgetAmount($d);
@@ -168,8 +173,8 @@ try {
         case 'budget_label': {
             $id = budgetId($d);
             $name = budgetText($d, 'name', 160);
-            if (!$budgetExists($id, 'project')) budgetFail('Budget introuvable.', 404);
-            $pdo->prepare("UPDATE budgets SET name=? WHERE id=? AND kind='project'")->execute([$name, $id]);
+            if (!$budgetExists($id, 'project') && !$budgetExists($id, 'tontine')) budgetFail('Budget introuvable.', 404);
+            $pdo->prepare("UPDATE budgets SET name=? WHERE id=? AND kind IN ('project','tontine')")->execute([$name, $id]);
             budgetJson(['ok' => true]);
         }
 

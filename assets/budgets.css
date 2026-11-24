@@ -163,3 +163,6 @@ header,main{max-width:560px}
 @media(max-width:400px){.edit-recap b{font-size:13px}}
 .edit-budget .draft-error{grid-column:auto}
 .pay-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.pay-fields input{min-width:0;width:100%}
+/* Lot 13 : budget Tontine (épargne, sans dîme) */
+.kind-tag{display:inline-block;margin:4px 0 0;padding:2px 9px;border-radius:99px;background:var(--dogs-soft,#fff4e5);color:var(--dogs,#c2700a);font-size:11px;font-weight:600}
+.tithe-note{margin:0;padding:10px 12px;border-radius:12px;background:var(--accent-soft,#eaf0ff);color:var(--text,#1d1d1f);font-size:13px}

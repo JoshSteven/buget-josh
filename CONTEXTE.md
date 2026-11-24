@@ -31,7 +31,8 @@ Téléphone : barre fixe en bas à 4 icônes avec libellés courts et zone sûre
 
 ### Budgets
 - Deux types : **Grâce** (mensuelle : la Grâce de juillet est le salaire reçu fin juin) et **Projet / consultance**. Aucun budget avant juin 2026.
-- Chaque paiement reçu crée automatiquement une **dîme de 10 %** (bucket `tithe`), affichée dans Priorités.
+- **Tontine (épargne)**, lot 13 : repérée par un nom et une date, comme un Projet. **Décision de Josh du 24 novembre 2026 : c'est le seul budget sans dîme, et il n'y a aucune option pour retirer la dîme ailleurs.** La règle est appliquée par le serveur (`api.php`). Une tontine ne reçoit pas de récurrences.
+- Chaque paiement reçu d'une Grâce ou d'un Projet crée automatiquement une **dîme de 10 %** (bucket `tithe`), affichée dans Priorités.
 - Chaque dépense appartient à un budget et à une catégorie : **Priorités** (`priority`, plus `tithe`) ou **Petits chiens** (`dogs`).
 - Statuts : `planned` (prévue), `realised` (réalisée), `cancelled` (annulée). Une dépense annulée reste visible mais est **exclue de tous les totaux**.
 - Une seule carte de budget est ouverte à la fois. Aucun budget n'est ouvert automatiquement au chargement.

@@ -138,7 +138,7 @@ $row = 5;
 foreach ($budgets as $b) {
     $a = $agg[$b['id']];
     $sheet->fromArray([
-        $budgetName[$b['id']], $b['kind'] === 'grace' ? 'Grâce mensuelle' : 'Projet',
+        $budgetName[$b['id']], ['grace' => 'Grâce mensuelle', 'project' => 'Projet', 'tontine' => 'Tontine (épargne)'][$b['kind']] ?? $b['kind'],
         (float) $b['received'], $a['realised'], $a['planned'],
     ], null, "A$row");
     $sheet->setCellValue("F$row", "=C$row-D$row");

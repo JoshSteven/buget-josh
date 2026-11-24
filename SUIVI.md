@@ -7,8 +7,8 @@ Mis à jour le 18 novembre 2026. Les règles et l'architecture sont dans `CONTEX
 | Élément | État |
 |---|---|
 | Production | **`b7071c4`, déployé le 18 novembre par le premier `npm run deploy`** : 56 tests verts avant envoi, sauvegarde `budget-josh-deploy-20261118-193705.sql.gz`, suivi des migrations créé, lot 12 appliqué (7 dîmes sur 7 reliées à leur paiement), Cron de sauvegarde de nuit ajouté, site en ligne et API protégée. |
-| Local | À jour avec la production. |
-| Qualité locale | 56 tests Playwright verts sur la base de test séparée (dont Axe sur 5 pages), lint PHP et JS propres. |
+| Local | **Lot 13 (Tontine) terminé et commité, pas encore déployé** : l'IP de la box a changé (154.66.162.121), à autoriser dans cPanel > Autorisation SSH avant `npm run deploy`. |
+| Qualité locale | 58 tests Playwright verts sur la base de test séparée (dont Axe sur 5 pages), lint PHP et JS propres. |
 | Migrations | Lots 2 à 12 appliqués en production, suivis dans `schema_migrations`. |
 | Accès SSH | Alias `budgetjosh` (clé `id_ed25519_budgetjosh_o2switch` autorisée dans cPanel, IP 102.180.15.235 autorisée dans le pare-feu o2switch). Serveur roux.o2switch.net, PHP 8.3.36, composer et mysqldump disponibles. |
 
@@ -20,6 +20,7 @@ Mis à jour le 18 novembre 2026. Les règles et l'architecture sont dans `CONTEX
 | 11 | Récurrences sur chaque Grâce mensuelle, confirmation de suppression, en-tête d'actions, deux colonnes sur ordinateur, vrai export `.xlsx` | Oui (`6173386`) ; table des récurrences vide en production, rien à corriger |
 | Fondations | Voir section 2 | Oui (`b7071c4`) |
 | 12 | Modifier un budget complètement : paiements reçus modifiables, ajout, suppression, dîme qui suit (option A). Migration `lot-12-payment-tithe-link.sql` (relie chaque dîme à son paiement ; les deux dîmes locales ont été reliées) | Oui (`b7071c4`) |
+| 13 | Budget Tontine (épargne) : nom + date, jamais de dîme, repère « Tontine · sans dîme ». Migration `lot-13-tontine.sql` (type ajouté, contrainte de dates mise à jour) | **Non**, attend l'autorisation de la nouvelle IP |
 
 ## 2. Lot Fondations (validé par Josh le 18 novembre)
 

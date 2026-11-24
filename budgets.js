@@ -99,7 +99,7 @@
     const t = totalsFor(budget);
     const engaged = key => t[key].realised + t[key].planned;
     return `<article class="card ${budget.id === state.activeId ? 'active' : ''}" data-budget-card="${esc(budget.id)}">
-      <div class="card-head"><div><b>${esc(budgetLabel(budget))}</b><small>Disponible ${money(t.available_real)} · Reçu ${money(t.received)}</small></div>
+      <div class="card-head"><div><b>${esc(budgetLabel(budget))}</b>${budget.kind === 'tontine' ? '<span class="kind-tag">Tontine · sans dîme</span>' : ''}<small>Disponible ${money(t.available_real)} · Reçu ${money(t.received)}</small></div>
       <span class="card-tools"><button class="card-more" data-card-more="${esc(budget.id)}" aria-haspopup="menu" aria-expanded="false" aria-label="Actions du budget">…</button>
       <span class="card-actions-menu" data-card-menu="${esc(budget.id)}" role="menu" hidden>
       <button class="tool-edit" data-edit="${esc(budget.id)}" role="menuitem">Modifier le budget</button>
@@ -265,12 +265,14 @@
     sheet.setAttribute('aria-labelledby', 'editBudgetTitle');
     document.body.append(sheet);
 
-    const tenth = value => Math.round((Number(value) || 0) * .1);
+    const noTithe = budget.kind === 'tontine';
+    const tenth = value => noTithe ? 0 : Math.round((Number(value) || 0) * .1);
 
     function rowFoot(p, i) {
       const before = p.tithe ? Number(p.tithe.amount) : null;
       const after = tenth(p.amount);
       const line = p.removed ? 'Ce paiement et sa dîme seront supprimés.'
+        : noTithe ? 'Tontine (épargne) : pas de dîme.'
         : p.isNew ? `Nouvelle dîme : ${money(after)}`
         : before === null ? 'Aucune dîme reliée à ce paiement.'
         : before !== after ? `Dîme : ${money(before)} → <b>${money(after)}</b>` : `Dîme : ${money(before)}`;
@@ -307,8 +309,8 @@
       const month = sheet.querySelector('#editMonth')?.value;
       sheet.innerHTML = `<div class="edit-head"><div><p class="ey">Modifier le budget</p><h2 id="editBudgetTitle">${esc(budgetLabel(budget))}</h2></div>
         <button type="button" class="close" data-edit-close aria-label="Fermer">×</button></div>
-        ${budget.kind === 'project'
-          ? `<label>Nom du projet<input id="editName" maxlength="160" value="${esc(name ?? budget.name)}"></label>`
+        ${budget.kind !== 'grace'
+          ? `<label>${budget.kind === 'tontine' ? 'Nom de la tontine' : 'Nom du projet'}<input id="editName" maxlength="160" value="${esc(name ?? budget.name)}"></label>`
           : `<label>Mois couvert<input id="editMonth" type="month" min="2026-06" value="${esc(month ?? budget.period_month)}"></label>`}
         <h3 class="edit-section">Argent reçu</h3>
         <div class="pay-list">${payments.map(row).join('')}</div>
@@ -370,7 +372,7 @@
       try {
         const name = sheet.querySelector('#editName')?.value.trim();
         const month = sheet.querySelector('#editMonth')?.value;
-        if (budget.kind === 'project' && name && name !== budget.name) await api('budget_label', { id, name });
+        if (budget.kind !== 'grace' && name && name !== budget.name) await api('budget_label', { id, name });
         if (budget.kind === 'grace' && month && month !== budget.period_month) await api('budget_month', { id, month });
         for (const p of removed) await api('payment_delete', { id: p.id });
         for (const p of live) {
@@ -421,10 +423,11 @@
       </header>
       <main><button class="button" id="newBudget">+ Créer un budget</button><div id="overview" class="overview"></div><p class="ey">VOS BUDGETS</p><div id="sheet" class="sheet"></div></main>
       <dialog id="budgetDialog"><form id="budgetForm"><button type="button" class="close" aria-label="Fermer">×</button><p class="ey">NOUVEAU BUDGET</p><h2>Réglez le budget</h2>
-        <label>Type<select id="kind"><option value="grace">Grâce mensuelle</option><option value="project">Projet / consultance</option></select></label>
+        <label>Type<select id="kind"><option value="grace">Grâce mensuelle</option><option value="project">Projet / consultance</option><option value="tontine">Tontine (épargne)</option></select></label>
         <label id="monthBox">Mois couvert<input id="period" type="month" min="2026-06" required></label>
-        <label id="nameBox" class="hidden">Nom du projet<input id="projectName" maxlength="160"></label>
-        <label id="projectBox" class="hidden">Date du projet<input id="projectDate" type="date" min="2026-06-01"></label>
+        <label id="nameBox" class="hidden"><span id="nameLabel">Nom du projet</span><input id="projectName" maxlength="160"></label>
+        <label id="projectBox" class="hidden"><span id="dateLabel">Date du projet</span><input id="projectDate" type="date" min="2026-06-01"></label>
+        <p class="tithe-note" id="titheNote">Une dîme de 10 % sera ajoutée automatiquement dans les Priorités.</p>
         <label>Date de réception<input id="paymentDate" type="date" min="2026-06-01" required></label>
         <label>Montant reçu<input id="budgetAmount" type="number" min="1" inputmode="numeric" required></label>
         <label>Libellé<input id="paymentLabel" required maxlength="180"></label>
@@ -440,10 +443,17 @@
     $('#projectDate').value = today();
     $('#paymentDate').value = today();
     $('#kind').onchange = () => {
-      const project = $('#kind').value === 'project';
-      $('#monthBox').classList.toggle('hidden', project);
-      $('#nameBox').classList.toggle('hidden', !project);
-      $('#projectBox').classList.toggle('hidden', !project);
+      const kind = $('#kind').value;
+      const dated = kind !== 'grace';
+      $('#monthBox').classList.toggle('hidden', dated);
+      $('#nameBox').classList.toggle('hidden', !dated);
+      $('#projectBox').classList.toggle('hidden', !dated);
+      $('#nameLabel').textContent = kind === 'tontine' ? 'Nom de la tontine' : 'Nom du projet';
+      $('#dateLabel').textContent = kind === 'tontine' ? 'Date de la tontine' : 'Date du projet';
+      // Tontine = épargne : jamais de dîme (décision de Josh, sans option).
+      $('#titheNote').textContent = kind === 'tontine'
+        ? 'Tontine (épargne) : aucune dîme n’est prélevée.'
+        : 'Une dîme de 10 % sera ajoutée automatiquement dans les Priorités.';
     };
     $('#period').onchange = () => {
       const [y, m] = $('#period').value.split('-').map(Number);

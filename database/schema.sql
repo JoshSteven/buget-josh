@@ -1,4 +1,4 @@
--- Structure de référence de la base Budget Josh (sans aucune donnée), état après le lot 12.
+-- Structure de référence de la base Budget Josh (sans aucune donnée), état après le lot 13.
 -- Sert à créer la base de test (tests/reset-test-db.php). Les migrations restent la référence pour la production.
 SET FOREIGN_KEY_CHECKS=0;
 
@@ -68,13 +68,13 @@ CREATE TABLE `budget_payments` (
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `budgets` (
   `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `kind` enum('grace','project') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `kind` enum('grace','project','tontine') COLLATE utf8mb4_unicode_ci NOT NULL,
   `name` varchar(160) COLLATE utf8mb4_unicode_ci NOT NULL,
   `period_month` char(7) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `project_date` date DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  CONSTRAINT `valid_budget_date` CHECK ((((`kind` = 'grace') and (`period_month` is not null) and (`project_date` is null)) or ((`kind` = 'project') and (`project_date` is not null) and (`period_month` is null))))
+  CONSTRAINT `valid_budget_date` CHECK (((`kind` = 'grace') and (`period_month` is not null) and (`project_date` is null)) or ((`kind` in ('project','tontine')) and (`project_date` is not null) and (`period_month` is null)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `entries` (
