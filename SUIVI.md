@@ -6,10 +6,10 @@ Mis à jour le 18 novembre 2026. Les règles et l'architecture sont dans `CONTEX
 
 | Élément | État |
 |---|---|
-| Production | **`b7071c4`, déployé le 18 novembre par le premier `npm run deploy`** : 56 tests verts avant envoi, sauvegarde `budget-josh-deploy-20261118-193705.sql.gz`, suivi des migrations créé, lot 12 appliqué (7 dîmes sur 7 reliées à leur paiement), Cron de sauvegarde de nuit ajouté, site en ligne et API protégée. |
-| Local | **Lot 13 (Tontine) terminé et commité, pas encore déployé** : l'IP de la box a changé (154.66.162.121), à autoriser dans cPanel > Autorisation SSH avant `npm run deploy`. |
+| Production | **`4611481`, déployé le 24 novembre par `npm run deploy`** : sauvegarde `budget-josh-deploy-20261124-115353.sql.gz`, migration lot 13 appliquée et vérifiée sur MariaDB (type `tontine` et contrainte de dates en place), site en ligne et API protégée. |
+| Local | À jour avec la production. IP de la box autorisée dans le pare-feu SSH : 154.66.162.121 (24 novembre). |
 | Qualité locale | 58 tests Playwright verts sur la base de test séparée (dont Axe sur 5 pages), lint PHP et JS propres. |
-| Migrations | Lots 2 à 12 appliqués en production, suivis dans `schema_migrations`. |
+| Migrations | Lots 2 à 13 appliqués en production, suivis dans `schema_migrations`. |
 | Accès SSH | Alias `budgetjosh` (clé `id_ed25519_budgetjosh_o2switch` autorisée dans cPanel, IP 102.180.15.235 autorisée dans le pare-feu o2switch). Serveur roux.o2switch.net, PHP 8.3.36, composer et mysqldump disponibles. |
 
 ### Lots livrés
@@ -20,7 +20,7 @@ Mis à jour le 18 novembre 2026. Les règles et l'architecture sont dans `CONTEX
 | 11 | Récurrences sur chaque Grâce mensuelle, confirmation de suppression, en-tête d'actions, deux colonnes sur ordinateur, vrai export `.xlsx` | Oui (`6173386`) ; table des récurrences vide en production, rien à corriger |
 | Fondations | Voir section 2 | Oui (`b7071c4`) |
 | 12 | Modifier un budget complètement : paiements reçus modifiables, ajout, suppression, dîme qui suit (option A). Migration `lot-12-payment-tithe-link.sql` (relie chaque dîme à son paiement ; les deux dîmes locales ont été reliées) | Oui (`b7071c4`) |
-| 13 | Budget Tontine (épargne) : nom + date, jamais de dîme, repère « Tontine · sans dîme ». Migration `lot-13-tontine.sql` (type ajouté, contrainte de dates mise à jour) | **Non**, attend l'autorisation de la nouvelle IP |
+| 13 | Budget Tontine (épargne) : nom + date, jamais de dîme, repère « Tontine · sans dîme ». Migration `lot-13-tontine.sql` (type ajouté, contrainte de dates mise à jour) | Oui (`4611481`) |
 
 ## 2. Lot Fondations (validé par Josh le 18 novembre)
 
@@ -44,7 +44,7 @@ Défauts trouvés et corrigés en route : la feuille « Nouvelle dépense » ét
 Point connu : un test (« modifier une dépense ou un projet sans rien changer ») est parfois interrompu par une fermeture du navigateur de test, toujours en 2e position, jamais seul ; la seconde tentative le fait passer et il est signalé « flaky ».
 
 ## 3. Prochains lots
-Constat au déploiement : 3 récurrences attendent la Grâce de novembre (pas encore créée) et 7 rappels d'objectifs sont en attente côté Cron.
+Constat au déploiement du 24 novembre : 5 récurrences attendent la Grâce du mois (pas encore créée) et 10 rappels d'objectifs sont en attente côté Cron.
 
 1. **Notifications intelligentes** (proposition validée sur le principe) : un rappel par jour à l'heure choisie, silencieux si Josh a déjà avancé, rappels d'étapes en retard (aujourd'hui ignorées, d'où l'absence totale de notifications), calendrier J-2, jour J, J+1, J+3 puis hebdomadaire, boutons « Fait » et « Décaler » sur Android, écran Réglages des notifications, Cron horaire.
 
