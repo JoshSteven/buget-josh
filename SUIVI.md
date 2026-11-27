@@ -6,9 +6,9 @@ Mis à jour le 27 novembre 2026. Les règles et l'architecture sont dans `CONTEX
 
 | Élément | État |
 |---|---|
-| Production | **`610b3ab`, déployé le 27 novembre par `npm run deploy`** : lot 14 et correctif « Restaurer ». Sauvegarde `budget-josh-deploy-20261127-104833.sql.gz`, migration lot 14 appliquée sur MariaDB. Empreintes des dépenses et des totaux identiques avant et après ; requêtes des écrans exécutées ; API protégée, `tests/`, `bin/`, `database/` et `vendor/` bloqués. |
+| Production | **`610b3ab`, déployé le 27 novembre par `npm run deploy`** : lot 14 et correctif « Restaurer ». Sauvegarde `budget-josh-deploy-20261127-104833.sql.gz`, migration lot 14 appliquée sur MariaDB. Empreintes des dépenses et des totaux identiques avant et après ; requêtes des écrans exécutées ; API protégée, `tests/`, `bin/`, `database/` et `vendor/` bloqués. Retour de Josh le 27 novembre sur les déploiements : « c'est propre ». |
 | Local | Code identique à la production (le PC a en plus des notes de suivi). La base locale `budget_josh` est une base d’essai, sans les données réelles. IP de la box autorisée dans le pare-feu SSH : 154.66.162.121 (24 novembre, toujours valable le 27). |
-| Écart PC / serveur | Cinq tables en latin1 et mode SQL non strict sur le serveur, détail dans `CONTEXTE.md` section 4. Aucun « ? » trouvé le 27 novembre dans les libellés et titres. Correction proposée, décision en attente. |
+| Écart PC / serveur | Cinq tables en latin1 et mode SQL non strict sur le serveur, détail dans `CONTEXTE.md` section 4. Aucun « ? » trouvé le 27 novembre dans les libellés et titres. Correction reportée par Josh le 27 novembre. |
 | Qualité locale | 74 tests Playwright verts sur la base de test séparée (dont Axe sur 5 pages et le cadran), aussi lancés le 27 novembre sur la structure de production ; lint PHP et JS propres. |
 | Migrations | Lots 2 à 14 appliqués en production, suivis dans `schema_migrations`. |
 | Accès SSH | Alias `budgetjosh` (clé `id_ed25519_budgetjosh_o2switch` autorisée dans cPanel, IP 102.180.15.235 autorisée dans le pare-feu o2switch). Serveur roux.o2switch.net, PHP 8.3.36, composer et mysqldump disponibles. |
@@ -62,7 +62,9 @@ Point connu : un test (« modifier une dépense ou un projet sans rien changer �
 ## 3. Prochains lots
 Constat au déploiement du 27 novembre : 5 récurrences attendent la Grâce du mois (pas encore créée) ; la simulation du Cron des rappels annonce 2 rappels à créer et 13 en attente.
 
-### Décisions attendues de Josh
+### Reporté (Josh, 27 novembre : « pas maintenant, plus tard peut-être »)
+Ne pas lancer sans nouvelle demande. D'ici là, rejouer toute migration sur la structure de production avant déploiement.
+
 | Sujet | Proposition | Pourquoi |
 |---|---|---|
 | Aligner le serveur sur le PC (lot 15) | Convertir les cinq tables latin1 en utf8mb4 et corriger les deux écarts de `entries`, après répétition sur la structure de production et avec sauvegarde | Emojis et symboles perdus aujourd’hui ; une seule structure à tester |
