@@ -19,7 +19,7 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'list') {
         $rows = $pdo->query(
-            "SELECT r.id,r.label,r.amount,r.bucket,r.nature,r.note,r.frequency,r.start_date,r.day_of_month,r.next_date,r.active,
+            "SELECT r.id,r.label,r.amount,r.bucket,r.nature,r.note,r.tracking,r.usual_amount,r.frequency,r.start_date,r.day_of_month,r.next_date,r.active,
                     (SELECT COUNT(*) FROM recurring_expense_runs x WHERE x.recurring_id=r.id) AS generated_count,
                     EXISTS(SELECT 1 FROM budgets b WHERE b.kind='grace' AND b.period_month=DATE_FORMAT(r.next_date,'%Y-%m')) AS grace_ready
              FROM recurring_expenses r
@@ -42,13 +42,15 @@ try {
             || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
             recurringFail('Libellé, montant, catégorie et date valides requis.');
         }
+        $tracking = budgetTracking($data);
         $pdo->prepare(
-            'INSERT INTO recurring_expenses(id,label,amount,bucket,nature,note,frequency,start_date,day_of_month,next_date)
-             VALUES(?,?,?,?,?,?,"monthly",?,?,?)'
+            'INSERT INTO recurring_expenses(id,label,amount,bucket,nature,note,tracking,usual_amount,frequency,start_date,day_of_month,next_date)
+             VALUES(?,?,?,?,?,?,?,?,"monthly",?,?,?)'
         )->execute([
             $data['id'], $label, $amount, $bucket,
             trim((string) ($data['nature'] ?? '')) ?: null,
             trim((string) ($data['note'] ?? '')) ?: null,
+            $tracking, $tracking === 'gradual' ? budgetOptionalAmount($data, 'usual_amount') : null,
             $date, (int) date('j', strtotime($date)), $date,
         ]);
         // Si la Grâce du mois existe déjà, la dépense apparaît tout de suite comme prévue.
@@ -61,6 +63,19 @@ try {
         $query = $pdo->prepare('UPDATE recurring_expenses SET active=IF(active=1,0,1) WHERE id=?');
         $query->execute([(string) ($data['id'] ?? '')]);
         if (!$query->rowCount()) recurringFail('Récurrence introuvable.', 404);
+        echo json_encode(['ok' => true]);
+        exit;
+    }
+
+    if ($action === 'tracking') {
+        // Change le suivi pour les prochains mois ; les dépenses déjà créées ne bougent pas.
+        $id = (string) ($data['id'] ?? '');
+        $tracking = budgetTracking($data);
+        $exists = $pdo->prepare('SELECT 1 FROM recurring_expenses WHERE id=?');
+        $exists->execute([$id]);
+        if (!$exists->fetchColumn()) recurringFail('Récurrence introuvable.', 404);
+        $pdo->prepare('UPDATE recurring_expenses SET tracking=?,usual_amount=? WHERE id=?')
+            ->execute([$tracking, $tracking === 'gradual' ? budgetOptionalAmount($data, 'usual_amount') : null, $id]);
         echo json_encode(['ok' => true]);
         exit;
     }

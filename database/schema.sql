@@ -1,4 +1,4 @@
--- Structure de référence de la base Budget Josh (sans aucune donnée), état après le lot 13.
+-- Structure de référence de la base Budget Josh (sans aucune donnée), état après le lot 14.
 -- Sert à créer la base de test (tests/reset-test-db.php). Les migrations restent la référence pour la production.
 SET FOREIGN_KEY_CHECKS=0;
 
@@ -89,6 +89,8 @@ CREATE TABLE `entries` (
   `nature` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `goal_task_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `status` enum('planned','realised','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tracking` enum('single','gradual') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'single',
+  `usual_amount` decimal(12,2) DEFAULT NULL,
   `entry_date` date NOT NULL,
   `source` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'personal',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -98,6 +100,17 @@ CREATE TABLE `entries` (
   KEY `entries_goal_task_fk` (`goal_task_id`),
   CONSTRAINT `entries_goal_task_fk` FOREIGN KEY (`goal_task_id`) REFERENCES `goal_tasks` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_entry_budget` FOREIGN KEY (`budget_id`) REFERENCES `budgets` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `entry_consumptions` (
+  `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `entry_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `amount` decimal(12,2) NOT NULL,
+  `consumed_on` date NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `consumption_entry` (`entry_id`),
+  CONSTRAINT `fk_consumption_entry` FOREIGN KEY (`entry_id`) REFERENCES `entries` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `goal_reminders` (
@@ -194,6 +207,8 @@ CREATE TABLE `recurring_expenses` (
   `bucket` enum('priority','dogs') COLLATE utf8mb4_unicode_ci NOT NULL,
   `nature` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `note` varchar(300) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tracking` enum('single','gradual') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'single',
+  `usual_amount` decimal(12,2) DEFAULT NULL,
   `frequency` enum('monthly') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'monthly',
   `start_date` date NOT NULL,
   `day_of_month` tinyint unsigned NOT NULL,

@@ -1,4 +1,4 @@
-const CACHE='budget-josh-shell-v17';
+const CACHE='budget-josh-shell-v18';
 const SHELL=['./','index.php','session-guard.js','budgets.js','recurring-expenses.js','assets/budgets.css','goals-link.js','offline-sync.js','mobile-motion.js','objectives.php','objectives-v2.php','objectives-v2.js','goal-notifications.js','assets/vendor/gsap.min.js','assets/vendor/lenis.min.js','assets/vendor/lenis.css','assets/theme.css','assets/fonts/inter-var.woff2','assets/fonts/manrope-var.woff2','uuid-polyfill.js','icon-192.png','apple-touch-icon.png','assets/logo.svg','icon-512.png','icon-maskable-192.png','icon-maskable-512.png','manifest.webmanifest'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>Promise.allSettled(SHELL.map(asset=>cache.add(asset)))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});
@@ -6,7 +6,10 @@ self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys
 // demandee sans session valide repond par une redirection vers login.php. La mettre
 // en cache sous l'URL d'origine ferait apparaitre l'ecran de connexion a la place de
 // l'application une fois hors ligne.
-self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;event.respondWith(fetch(event.request).then(response=>{if(response.ok&&!response.redirected){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy))}return response}).catch(()=>caches.match(event.request,{ignoreSearch:true}).then(cached=>cached||Response.error())))});
+// Une reponse reprise du cache est marquee « X-Budget-Cache » : offline-sync.js lui prefere alors
+// son cache local, qui contient les saisies pas encore envoyees.
+const fromCache=cached=>{const headers=new Headers(cached.headers);headers.set('X-Budget-Cache','1');return new Response(cached.body,{status:cached.status,statusText:cached.statusText,headers})};
+self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;event.respondWith(fetch(event.request).then(response=>{if(response.ok&&!response.redirected){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy))}return response}).catch(()=>caches.match(event.request,{ignoreSearch:true}).then(cached=>cached?(event.request.url.includes('api.php?action=bootstrap')?fromCache(cached):cached):Response.error())))});
 
 self.addEventListener('push',event=>{let data={};try{data=event.data?.json()||{}}catch{}event.waitUntil(self.registration.showNotification(data.title||'Budget Josh',{body:data.body||'Un objectif mérite votre attention.',icon:'icon-192.png',tag:data.tag||'budget-josh-goal',data:{url:data.url||'objectives.php'}}))});
 self.addEventListener('notificationclick',event=>{event.notification.close();const target=new URL(event.notification.data?.url||'objectives.php',self.location.origin).href;event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(windows=>{for(const client of windows){if('focus'in client){client.navigate(target);return client.focus()}}return clients.openWindow(target)}))});

@@ -8,8 +8,23 @@ declare(strict_types=1);
  * Règles :
  *  - les dépenses annulées sont exclues de tous les totaux ;
  *  - Priorités = bucket « priority » + dîme (« tithe ») ; Petits chiens = « dogs » ;
- *  - disponible réel = reçu − réalisé ; disponible engagé = reçu − réalisé − prévu.
+ *  - disponible réel = reçu − réalisé ; disponible engagé = reçu − réalisé − prévu ;
+ *  - dépense « au fur et à mesure » (lot 14) : réalisé = somme des passages ; prévu = ce qui reste
+ *    du montant tant qu'elle est ouverte (jamais négatif). Clôturée, le reste redevient disponible.
  */
+
+/**
+ * Part réalisée et part prévue d'une dépense. Seule définition de la règle côté serveur
+ * (budgets.js en a la copie pour le mode hors connexion).
+ *
+ * @return array{0: float, 1: float} [réalisé, prévu]
+ */
+function budgetEntrySplit(string $status, string $tracking, float $amount, float $consumed): array
+{
+    if ($status === 'cancelled') return [0.0, 0.0];
+    if ($tracking === 'gradual') return [$consumed, $status === 'planned' ? max($amount - $consumed, 0.0) : 0.0];
+    return $status === 'realised' ? [$amount, 0.0] : [0.0, $amount];
+}
 
 /** @return array<string, array> totaux indexés par identifiant de budget */
 function budgetTotals(PDO $pdo): array
@@ -31,21 +46,24 @@ function budgetTotals(PDO $pdo): array
     }
 
     $rows = $pdo->query(
-        "SELECT budget_id, bucket, status, COALESCE(NULLIF(nature,''),'') nature, SUM(amount) total
-         FROM entries WHERE type='expense' AND status IN ('planned','realised')
-         GROUP BY budget_id, bucket, status, nature"
+        "SELECT e.budget_id, e.bucket, e.status, e.tracking, e.amount, COALESCE(NULLIF(e.nature,''),'') nature,
+                COALESCE(c.consumed,0) consumed
+         FROM entries e
+         LEFT JOIN (SELECT entry_id, SUM(amount) consumed FROM entry_consumptions GROUP BY entry_id) c ON c.entry_id=e.id
+         WHERE e.type='expense' AND e.status IN ('planned','realised')"
     )->fetchAll(PDO::FETCH_ASSOC);
     foreach ($rows as $r) {
         if (!isset($totals[$r['budget_id']])) continue;
         $t = &$totals[$r['budget_id']];
-        $amount = (float) $r['total'];
-        $status = $r['status'];
+        [$done, $planned] = budgetEntrySplit($r['status'], $r['tracking'], (float) $r['amount'], (float) $r['consumed']);
         $category = $r['bucket'] === 'dogs' ? 'dogs' : 'priority';
-        $t[$status] += $amount;
-        $t[$category][$status] += $amount;
-        if ($r['nature'] !== '') {
-            $t['natures'][$r['nature']] ??= ['realised' => 0.0, 'planned' => 0.0];
-            $t['natures'][$r['nature']][$status] += $amount;
+        foreach (['realised' => $done, 'planned' => $planned] as $key => $part) {
+            $t[$key] += $part;
+            $t[$category][$key] += $part;
+            if ($r['nature'] !== '' && $part > 0) {
+                $t['natures'][$r['nature']] ??= ['realised' => 0.0, 'planned' => 0.0];
+                $t['natures'][$r['nature']][$key] += $part;
+            }
         }
         unset($t);
     }

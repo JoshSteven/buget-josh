@@ -33,7 +33,12 @@
     .confirm-actions button{min-height:50px;border:0;border-radius:14px;font:inherit;font-weight:600;font-size:16px;cursor:pointer}
     .confirm-actions .confirm-danger{background:var(--danger,#d70015);color:#fff}
     .confirm-actions .confirm-keep{background:var(--surface-2,#f2f2f7);color:var(--text,#1d1d1f)}
-    @media(max-width:479px){.recurring-item{flex-direction:column;align-items:stretch}.recurring-actions{justify-content:flex-end}}
+    .confirm-sheet.neutral .confirm-icon{background:var(--accent-soft,#eaf0ff);color:var(--accent,#2456f5)}
+    .confirm-sheet.neutral .confirm-actions .confirm-danger{background:var(--accent,#2456f5)}
+    .recurring-item{flex-wrap:wrap}
+    .recurring-tracking{flex:0 0 100%;display:grid;gap:10px;padding-top:10px;border-top:1px solid var(--line,#e5e5ea)}
+    .recurring-tracking[hidden]{display:none!important}
+    @media(max-width:479px){.recurring-item{flex-direction:column;flex-wrap:nowrap;align-items:stretch}.recurring-actions{justify-content:flex-end}.recurring-tracking{flex:0 0 auto}}
   `;
   document.head.append(style);
 
@@ -55,16 +60,27 @@
   let dialog = null;
   let refreshTicket = 0;
 
+  // Choix « En une fois / Au fur et à mesure » (lot 14), partagé avec l'écran Budgets.
+  // « locked » désigne le choix devenu impossible.
+  const trackingField = (name, value, locked = '') => '<fieldset class="segmented"><legend>Elle se dépense</legend><div>' +
+    [['single', 'En une fois'], ['gradual', 'Au fur et à mesure']].map(([key, label]) =>
+      '<label><input type="radio" name="' + esc(name) + '" value="' + key + '"' + (key === value ? ' checked' : '') +
+      (key === locked ? ' disabled' : '') + '><span>' + label + '</span></label>').join('') + '</div></fieldset>';
+  window.BudgetTrackingField = trackingField;
+
   // Feuille de confirmation au style de l'application (remplace confirm() du navigateur).
-  function confirmSheet({ title, message, confirmLabel }) {
+  // tone « neutral » : action sans suppression (coche bleue au lieu de la corbeille rouge).
+  function confirmSheet({ title, message, confirmLabel, cancelLabel = 'Garder', tone = 'danger' }) {
     return new Promise(resolve => {
       const sheet = document.createElement('dialog');
-      sheet.className = 'confirm-sheet';
+      sheet.className = 'confirm-sheet' + (tone === 'neutral' ? ' neutral' : '');
       sheet.setAttribute('aria-labelledby', 'confirmTitle');
-      sheet.innerHTML = '<div class="confirm-icon">' + icon('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>') + '</div>' +
+      const picture = tone === 'neutral' ? '<path d="m5 12.5 4.5 4.5L19 7.5"/>'
+        : '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>';
+      sheet.innerHTML = '<div class="confirm-icon">' + icon(picture) + '</div>' +
         '<h2 id="confirmTitle">' + esc(title) + '</h2><p>' + esc(message) + '</p>' +
         '<div class="confirm-actions"><button type="button" class="confirm-danger">' + esc(confirmLabel) + '</button>' +
-        '<button type="button" class="confirm-keep">Garder</button></div>';
+        '<button type="button" class="confirm-keep">' + esc(cancelLabel) + '</button></div>';
       document.body.append(sheet);
       const done = value => { sheet.close(); sheet.remove(); resolve(value); };
       sheet.querySelector('.confirm-danger').onclick = () => done(true);
@@ -92,14 +108,40 @@
         const next = !active ? 'En pause : rien n’est ajouté'
           : waiting ? '<span class="waiting">En attente de la Grâce de ' + esc(monthName(item.next_date)) + '</span>'
           : 'Prochaine : ' + esc(day(item.next_date));
+        const gradual = item.tracking === 'gradual';
+        const usual = Number(item.usual_amount) || 0;
+        const tracking = gradual ? 'Au fur et à mesure' + (usual ? ' · habituel ' + money(usual) : '') : 'En une fois';
         return '<article class="recurring-item' + (active ? '' : ' paused') + '"><div><strong>' +
           esc(item.label) + (active ? '' : '<span class="recurring-badge">En pause</span>') + '</strong><small>' +
           money(item.amount) + ' · ' + (item.bucket === 'priority' ? 'Priorités' : 'Petits chiens') +
-          ' · le ' + esc(item.day_of_month) + ' de chaque mois<br>' + next +
+          ' · le ' + esc(item.day_of_month) + ' de chaque mois<br>' + tracking + '<br>' + next +
           '</small></div><div class="recurring-actions">' +
+          '<button type="button" data-rec-tracking="' + esc(item.id) + '" aria-expanded="false" aria-label="Changer le suivi de ' + esc(item.label) + '">Suivi</button>' +
           '<button type="button" data-rec-toggle="' + esc(item.id) + '">' + (active ? 'Mettre en pause' : 'Reprendre') + '</button>' +
-          '<button type="button" data-rec-delete="' + esc(item.id) + '" data-label="' + esc(item.label) + '" aria-label="Supprimer ' + esc(item.label) + '">Supprimer</button></div></article>';
+          '<button type="button" data-rec-delete="' + esc(item.id) + '" data-label="' + esc(item.label) + '" aria-label="Supprimer ' + esc(item.label) + '">Supprimer</button></div>' +
+          '<form class="recurring-tracking" data-rec-form="' + esc(item.id) + '" novalidate hidden>' +
+          trackingField('rec-tracking-' + item.id, gradual ? 'gradual' : 'single') +
+          '<label data-usual' + (gradual ? '' : ' hidden') + '>Montant habituel (facultatif)<input type="number" min="1" inputmode="numeric" value="' + (usual || '') + '"></label>' +
+          '<p class="sheet-hint">Vaut pour les prochains mois. Une dépense déjà créée se modifie dans son budget.</p>' +
+          '<button class="button" type="submit">Enregistrer le suivi</button><p class="recurring-status" role="status"></p></form></article>';
       }).join('');
+      list.querySelectorAll('[data-rec-tracking]').forEach(button => button.onclick = () => {
+        const form = button.closest('.recurring-item').querySelector('.recurring-tracking');
+        form.hidden = !form.hidden;
+        button.setAttribute('aria-expanded', String(!form.hidden));
+      });
+      list.querySelectorAll('[data-rec-form]').forEach(form => {
+        const choice = () => form.querySelector('input[type="radio"]:checked').value;
+        form.onchange = () => { form.querySelector('[data-usual]').hidden = choice() !== 'gradual'; };
+        form.onsubmit = async event => {
+          event.preventDefault();
+          try {
+            const usual = form.querySelector('[data-usual] input').value;
+            await api('tracking', { id: form.dataset.recForm, tracking: choice(), usual_amount: choice() === 'gradual' && usual !== '' ? Number(usual) : null });
+            await refresh();
+          } catch (error) { form.querySelector('.recurring-status').textContent = error.message; }
+        };
+      });
       list.querySelectorAll('[data-rec-toggle]').forEach(button => button.onclick = async () => {
         button.disabled = true;
         try { await api('toggle', { id: button.dataset.recToggle }); } catch (error) { alert(error.message); }
@@ -138,6 +180,7 @@
     dialog = document.createElement('dialog');
     dialog.className = 'recurring-dialog';
     dialog.setAttribute('aria-labelledby', 'recurringTitle');
+    dialog.setAttribute('data-lenis-prevent', '');
     dialog.innerHTML =
       '<div class="recurring-head"><div><p class="ey">Automatisation</p><h2 id="recurringTitle">Dépenses récurrentes</h2>' +
       '<p class="intro" id="recurringCount"></p></div><button class="close" type="button" aria-label="Fermer">×</button></div>' +
@@ -148,6 +191,8 @@
       '<form id="recurringForm" class="recurring-form" hidden><h3>Nouvelle dépense récurrente</h3>' +
       '<label>Libellé<input id="recurringLabel" required maxlength="180" placeholder="Ex. Wifi, Loyer, Tontine"></label>' +
       '<label>Montant (F CFA)<input id="recurringAmount" type="number" min="1" inputmode="numeric" required></label>' +
+      trackingField('rec-tracking', 'single') +
+      '<label id="recurringUsualBox" hidden>Montant habituel (facultatif)<input id="recurringUsual" type="number" min="1" inputmode="numeric" placeholder="Ex. 2000"></label>' +
       '<label>Catégorie<select id="recurringBucket"><option value="priority">Priorités</option><option value="dogs">Petits chiens</option></select></label>' +
       '<label>À partir du<input id="recurringDate" type="date" required></label>' +
       '<label>Nature (optionnel)<input id="recurringNature"></label><label>Note (optionnelle)<input id="recurringNote"></label>' +
@@ -161,10 +206,15 @@
       dialog.querySelector('#recurringLabel').focus();
     };
     dialog.querySelector('.close').onclick = () => dialog.close();
+    const choice = () => form.querySelector('[name="rec-tracking"]:checked').value;
+    const showUsual = () => { dialog.querySelector('#recurringUsualBox').hidden = choice() !== 'gradual'; };
+    form.addEventListener('change', showUsual);
+    form.addEventListener('reset', () => setTimeout(showUsual));
     form.onsubmit = async event => {
       event.preventDefault();
-      const status = dialog.querySelector('.recurring-status');
+      const status = form.querySelector('.recurring-status');
       status.textContent = '';
+      const usual = dialog.querySelector('#recurringUsual').value;
       try {
         await api('create', {
           id: crypto.randomUUID(),
@@ -174,6 +224,8 @@
           start_date: dialog.querySelector('#recurringDate').value,
           nature: dialog.querySelector('#recurringNature').value.trim(),
           note: dialog.querySelector('#recurringNote').value.trim(),
+          tracking: choice(),
+          usual_amount: choice() === 'gradual' && usual !== '' ? Number(usual) : null,
         });
         form.reset();
         form.hidden = true;

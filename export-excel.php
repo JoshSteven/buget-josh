@@ -47,11 +47,12 @@ $budgets = $pdo->query(
      GROUP BY b.id ORDER BY COALESCE(b.period_month,DATE_FORMAT(b.project_date,'%Y-%m')) DESC,b.created_at DESC"
 )->fetchAll(PDO::FETCH_ASSOC);
 $entries = $pdo->query(
-    "SELECT budget_id,label,amount,bucket,nature,note,status,DATE_FORMAT(entry_date,'%Y-%m-%d') d,source
-     FROM entries WHERE type='expense' ORDER BY entry_date DESC,created_at DESC"
+    "SELECT e.budget_id,e.label,e.amount,e.bucket,e.nature,e.note,e.status,e.tracking,e.source,DATE_FORMAT(e.entry_date,'%Y-%m-%d') d,
+            (SELECT COALESCE(SUM(c.amount),0) FROM entry_consumptions c WHERE c.entry_id=e.id) consumed
+     FROM entries e WHERE e.type='expense' ORDER BY e.entry_date DESC,e.created_at DESC"
 )->fetchAll(PDO::FETCH_ASSOC);
 $recurrences = $pdo->query(
-    'SELECT label,amount,bucket,day_of_month,next_date,active FROM recurring_expenses ORDER BY active DESC,label'
+    'SELECT label,amount,bucket,day_of_month,next_date,active,tracking FROM recurring_expenses ORDER BY active DESC,label'
 )->fetchAll(PDO::FETCH_ASSOC);
 
 $budgetName = [];
@@ -160,10 +161,12 @@ $sheet->freezePane('A5');
 
 // 2. Dépenses
 $sheet = $book->createSheet()->setTitle('Dépenses');
-$title($sheet, 'Toutes les dépenses', 'Une ligne par dépense, de la plus récente à la plus ancienne. Utilise les flèches de filtre de la ligne 4.', 'H');
-$header($sheet, 4, ['Date', 'Budget', 'Catégorie', 'Nature', 'Libellé', 'Montant', 'Statut', 'Note']);
+$title($sheet, 'Toutes les dépenses', 'Une ligne par dépense, de la plus récente à la plus ancienne. Utilise les flèches de filtre de la ligne 4.', 'J');
+$header($sheet, 4, ['Date', 'Budget', 'Catégorie', 'Nature', 'Libellé', 'Montant', 'Consommé', 'Reste prévu', 'Statut', 'Note']);
 $row = 5;
 foreach ($entries as $e) {
+    // Même règle que les totaux : budgetEntrySplit (lib/budget-totals.php).
+    [$done, $planned] = budgetEntrySplit($e['status'], $e['tracking'], (float) $e['amount'], (float) $e['consumed']);
     $sheet->fromArray([
         $e['d'] ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(new DateTime($e['d'])) : '',
         $budgetName[$e['budget_id']] ?? '',
@@ -171,34 +174,38 @@ foreach ($entries as $e) {
         $e['nature'] ?: '',
         $e['label'] . ($e['source'] === 'recurring' ? ' ↻' : ''),
         (float) $e['amount'],
-        $statusLabel[$e['status']] ?? $e['status'],
+        $done,
+        $planned,
+        $e['tracking'] === 'gradual' && $e['status'] !== 'cancelled'
+            ? ($e['status'] === 'realised' ? 'Clôturée' : 'En cours')
+            : ($statusLabel[$e['status']] ?? $e['status']),
         $e['note'] ?: '',
-    ], null, "A$row");
+    ], null, "A$row", true);
     if ($e['status'] === 'cancelled') {
-        $sheet->getStyle("A$row:H$row")->getFont()->setStrikethrough(true)->getColor()->setRGB('A1A1A6');
+        $sheet->getStyle("A$row:J$row")->getFont()->setStrikethrough(true)->getColor()->setRGB('A1A1A6');
     } elseif ($e['status'] === 'realised') {
-        $sheet->getStyle("G$row")->getFont()->getColor()->setRGB(XL_ACCENT);
+        $sheet->getStyle("I$row")->getFont()->getColor()->setRGB(XL_ACCENT);
     }
     $row++;
 }
 $last = $row - 1;
 if ($last >= 5) {
-    $stripe($sheet, 5, $last, 'H');
-    $sheet->setAutoFilter("A4:H$last");
+    $stripe($sheet, 5, $last, 'J');
+    $sheet->setAutoFilter("A4:J$last");
 }
 $sheet->getStyle("A5:A$row")->getNumberFormat()->setFormatCode('dd/mm/yyyy');
-$sheet->getStyle("F5:F$row")->getNumberFormat()->setFormatCode(XL_MONEY);
-$sheet->getStyle("G5:G$row")->getFont()->setBold(true);
+$sheet->getStyle("F5:H$row")->getNumberFormat()->setFormatCode(XL_MONEY);
+$sheet->getStyle("I5:I$row")->getFont()->setBold(true);
 $row++;
 $sheet->setCellValue("E$row", 'Total réalisé');
-$sheet->setCellValue("F$row", $last >= 5 ? "=SUMIFS(F5:F$last,G5:G$last,\"Réalisée\")" : 0);
+$sheet->setCellValue("G$row", $last >= 5 ? "=SUM(G5:G$last)" : 0);
 $sheet->setCellValue("E" . ($row + 1), 'Total prévu');
-$sheet->setCellValue("F" . ($row + 1), $last >= 5 ? "=SUMIFS(F5:F$last,G5:G$last,\"Prévue\")" : 0);
-$sheet->getStyle("E$row:F" . ($row + 1))->getFont()->setBold(true);
-$sheet->getStyle("F$row:F" . ($row + 1))->getNumberFormat()->setFormatCode(XL_MONEY);
-$sheet->setCellValue("A" . ($row + 3), '↻ = dépense ajoutée par une récurrence. Les lignes barrées sont annulées et ne comptent dans aucun total.');
+$sheet->setCellValue("H" . ($row + 1), $last >= 5 ? "=SUM(H5:H$last)" : 0);
+$sheet->getStyle("E$row:H" . ($row + 1))->getFont()->setBold(true);
+$sheet->getStyle("F$row:H" . ($row + 1))->getNumberFormat()->setFormatCode(XL_MONEY);
+$sheet->setCellValue("A" . ($row + 3), '↻ = dépense ajoutée par une récurrence. « En cours » et « Clôturée » : dépense au fur et à mesure. Les lignes barrées sont annulées et ne comptent dans aucun total.');
 $sheet->getStyle("A" . ($row + 3))->getFont()->setSize(10)->getColor()->setRGB(XL_MUTED);
-$widths($sheet, ['A' => 12, 'B' => 26, 'C' => 18, 'D' => 24, 'E' => 34, 'F' => 15, 'G' => 11, 'H' => 34]);
+$widths($sheet, ['A' => 12, 'B' => 26, 'C' => 18, 'D' => 24, 'E' => 34, 'F' => 15, 'G' => 15, 'H' => 15, 'I' => 11, 'J' => 34]);
 $sheet->freezePane('A5');
 
 // 3. Par catégorie
@@ -245,13 +252,14 @@ $sheet->freezePane('A5');
 
 // 4. Récurrences
 $sheet = $book->createSheet()->setTitle('Récurrences');
-$title($sheet, 'Dépenses récurrentes', 'Ajoutées chaque mois comme prévues dans la Grâce du mois', 'F');
-$header($sheet, 4, ['Libellé', 'Montant', 'Catégorie', 'Jour du mois', 'Prochaine date', 'État']);
+$title($sheet, 'Dépenses récurrentes', 'Ajoutées chaque mois comme prévues dans la Grâce du mois', 'G');
+$header($sheet, 4, ['Libellé', 'Montant', 'Catégorie', 'Jour du mois', 'Prochaine date', 'État', 'Suivi']);
 $row = 5;
 foreach ($recurrences as $r) {
     $sheet->fromArray([
         $r['label'], (float) $r['amount'], $category($r['bucket']), (int) $r['day_of_month'],
         $frDate($r['next_date']), (int) $r['active'] === 1 ? 'Active' : 'En pause',
+        $r['tracking'] === 'gradual' ? 'Au fur et à mesure' : 'En une fois',
     ], null, "A$row");
     $row++;
 }
@@ -260,13 +268,13 @@ if ($row === 5) {
     $sheet->getStyle('A5')->getFont()->getColor()->setRGB(XL_MUTED);
 } else {
     $last = $row - 1;
-    $stripe($sheet, 5, $last, 'F');
+    $stripe($sheet, 5, $last, 'G');
     $sheet->setCellValue("A$row", 'Total mensuel des récurrences actives');
     $sheet->setCellValue("B$row", "=SUMIFS(B5:B$last,F5:F$last,\"Active\")");
-    $totalRow($sheet, $row, 'F');
+    $totalRow($sheet, $row, 'G');
     $sheet->getStyle("B5:B$row")->getNumberFormat()->setFormatCode(XL_MONEY);
 }
-$widths($sheet, ['A' => 34, 'B' => 16, 'C' => 16, 'D' => 14, 'E' => 18, 'F' => 12]);
+$widths($sheet, ['A' => 34, 'B' => 16, 'C' => 16, 'D' => 14, 'E' => 18, 'F' => 12, 'G' => 20]);
 
 $book->setActiveSheetIndex(0);
 

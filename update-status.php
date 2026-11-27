@@ -1,5 +1,35 @@
 <?php
-declare(strict_types=1); header('Content-Type: application/json; charset=utf-8');
-require __DIR__.'/auth.php'; budgetRequireAuthApi();
-function statusFail(string $m,int $s=422):never{http_response_code($s);echo json_encode(['error'=>$m],JSON_UNESCAPED_UNICODE);exit;}
-try{if($_SERVER['REQUEST_METHOD']!=='POST')statusFail('Méthode non autorisée.',405);try{$d=json_decode(file_get_contents('php://input'),true,512,JSON_THROW_ON_ERROR);}catch(Throwable){statusFail('Données invalides.');}if(empty($d['id'])||!in_array($d['status']??'', ['planned','realised','cancelled'],true))statusFail('Statut invalide.');$c=require __DIR__.'/config.php';$pdo = budgetDb();$q=$pdo->prepare('SELECT id FROM entries WHERE id=?');$q->execute([$d['id']]);if(!$q->fetchColumn())statusFail('Dépense introuvable.',404);$pdo->prepare('UPDATE entries SET status=? WHERE id=?')->execute([$d['status'],$d['id']]);echo json_encode(['ok'=>true]);}catch(Throwable){statusFail('Impossible de mettre à jour la dépense.',500);}
+declare(strict_types=1);
+
+/*
+ * Statut d'une dépense : prévue, réalisée ou annulée.
+ * Dépense « au fur et à mesure » (lot 14) : « réalisée » veut dire clôturée, « prévue » ouverte.
+ * Elle ne peut pas être annulée tant que des passages sont enregistrés (argent réellement sorti).
+ */
+
+require __DIR__ . '/auth.php';
+budgetRequireAuthApi();
+
+try {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') budgetFail('Méthode non autorisée.', 405);
+    $d = budgetBody();
+    $id = (string) ($d['id'] ?? '');
+    $status = (string) ($d['status'] ?? '');
+    if ($id === '' || !in_array($status, ['planned', 'realised', 'cancelled'], true)) budgetFail('Statut invalide.');
+
+    $pdo = budgetDb();
+    $query = $pdo->prepare(
+        'SELECT e.tracking,(SELECT COUNT(*) FROM entry_consumptions c WHERE c.entry_id=e.id) passages
+         FROM entries e WHERE e.id=?'
+    );
+    $query->execute([$id]);
+    $entry = $query->fetch() ?: budgetFail('Dépense introuvable.', 404);
+    if ($status === 'cancelled' && $entry['tracking'] === 'gradual' && (int) $entry['passages'] > 0) {
+        budgetFail('Des passages sont déjà enregistrés : clôture la dépense, ou retire-les d’abord.');
+    }
+    $pdo->prepare('UPDATE entries SET status=? WHERE id=?')->execute([$status, $id]);
+    budgetJson(['ok' => true]);
+} catch (Throwable $error) {
+    error_log('update-status.php : ' . $error->getMessage());
+    budgetFail('Impossible de mettre à jour la dépense.', 500);
+}

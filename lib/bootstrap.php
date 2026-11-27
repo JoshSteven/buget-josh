@@ -80,6 +80,22 @@ function budgetAmount(array $d, string $key = 'amount'): float
     return round((float) $value, 2);
 }
 
+/** Montant facultatif : null si le champ est vide, sinon un montant positif. */
+function budgetOptionalAmount(array $d, string $key): ?float
+{
+    $value = $d[$key] ?? null;
+    if ($value === null || $value === '') return null;
+    return budgetAmount($d, $key);
+}
+
+/** Suivi d'une dépense (lot 14) : « single » (en une fois, par défaut) ou « gradual » (au fur et à mesure). */
+function budgetTracking(array $d, string $key = 'tracking'): string
+{
+    $value = (string) ($d[$key] ?? 'single');
+    if (!in_array($value, ['single', 'gradual'], true)) budgetFail('Type de suivi invalide.');
+    return $value;
+}
+
 function budgetDate(array $d, string $key): string
 {
     $value = (string) ($d[$key] ?? '');

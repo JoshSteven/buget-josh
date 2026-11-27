@@ -15,16 +15,21 @@
     'Épargne / engagements financiers', 'Dettes / remboursements', 'Plaisir / alimentation', 'Loisirs',
     'Télécoms / connectivité', 'Abonnements numériques', 'Équipement / matériel', 'Santé / bien-être', 'Autre'];
   const CATEGORIES = [['priority', 'Priorités'], ['dogs', 'Petits chiens']];
+  /** Pas du curseur « au fur et à mesure », en F CFA. Le champ « Montant exact » couvre le reste. */
+  const STEP = 500;
   const today = () => new Date().toISOString().slice(0, 10);
   const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const state = { db: { budgets: [], expenses: [], payments: [], totals: {} }, activeId: null, draft: null };
+  const state = { db: { budgets: [], expenses: [], payments: [], consumptions: [], totals: {} }, activeId: null, draft: null, refreshSheet: null };
 
   /* ---------- Outils ---------- */
 
   const $ = selector => document.querySelector(selector);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const money = n => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(Number(n) || 0) + ' F CFA';
+  const number = n => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(Number(n) || 0);
+  const money = n => number(n) + ' F CFA';
+  const dayFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
+  const dayLabel = date => dayFmt.format(new Date(date + 'T12:00:00'));
   const monthFmt = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
   const budgetLabel = b => b.kind === 'grace' ? 'Grâce — ' + monthFmt.format(new Date(b.period_month + '-02T12:00:00')) : b.name;
   const svg = path => '<svg viewBox="0 0 24 24" aria-hidden="true">' + path + '</svg>';
@@ -44,20 +49,39 @@
     ? window.BudgetConfirm(options)
     : Promise.resolve(confirm(options.title + '\n\n' + options.message));
 
+  /* ---------- Dépenses « au fur et à mesure » ---------- */
+
+  const isGradual = e => e.tracking === 'gradual';
+  const passagesOf = entryId => (state.db.consumptions || []).filter(c => c.entry_id === entryId);
+  const consumedOf = entryId => passagesOf(entryId).reduce((n, c) => n + Number(c.amount), 0);
+
+  /** [réalisé, prévu] d'une dépense. Copie de budgetEntrySplit (lib/budget-totals.php) pour le hors connexion. */
+  function split(e) {
+    if (e.status === 'cancelled') return [0, 0];
+    const amount = Number(e.amount);
+    if (isGradual(e)) {
+      const done = consumedOf(e.id);
+      return [done, e.status === 'planned' ? Math.max(amount - done, 0) : 0];
+    }
+    return e.status === 'realised' ? [amount, 0] : [0, amount];
+  }
+
   /* ---------- Totaux ---------- */
 
   /*
    * Totaux d'un budget : ceux du serveur. Seule exception, le mode hors connexion :
-   * offline-sync.js ajoute alors des lignes au cache local que le serveur n'a pas encore
+   * offline-sync.js modifie alors le cache local avec des saisies que le serveur n'a pas encore
    * vues ; on recalcule avec la même règle (annulées exclues) jusqu'au retour du réseau.
    */
   function totalsFor(budget) {
     const offline = state.db.expenses.some(e => e._offline);
     const server = state.db.totals?.[budget.id];
     if (server && !offline) return server;
-    const rows = state.db.expenses.filter(e => e.budget_id === budget.id && e.status !== 'cancelled');
-    const sum = list => list.reduce((n, e) => n + Number(e.amount), 0);
-    const part = test => ({ realised: sum(rows.filter(e => test(e) && e.status === 'realised')), planned: sum(rows.filter(e => test(e) && e.status === 'planned')) });
+    const rows = state.db.expenses.filter(e => e.budget_id === budget.id);
+    const part = test => rows.filter(test).reduce((sum, e) => {
+      const [done, planned] = split(e);
+      return { realised: sum.realised + done, planned: sum.planned + planned };
+    }, { realised: 0, planned: 0 });
     const t = { received: Number(budget.received), priority: part(e => e.bucket !== 'dogs'), dogs: part(e => e.bucket === 'dogs') };
     t.realised = t.priority.realised + t.dogs.realised;
     t.planned = t.priority.planned + t.dogs.planned;
@@ -73,19 +97,51 @@
 
   /* ---------- Gabarits ---------- */
 
+  /** La jauge sous une dépense au fur et à mesure ; la toucher ouvre le cadran. */
+  function gaugeLine(e) {
+    const amount = Number(e.amount);
+    const done = consumedOf(e.id);
+    const over = done - amount;
+    const text = over > 0 ? `${number(done)} sur ${number(amount)} · dépassé de ${number(over)}`
+      : e.status === 'realised' ? `${number(done)} dépensés sur ${number(amount)}`
+      : `${number(done)} sur ${number(amount)} · reste ${number(amount - done)}`;
+    return `<button type="button" class="gauge-line" data-consume="${esc(e.id)}" aria-label="${esc(e.label)} : ${esc(text)} F CFA. Ouvrir le cadran">
+      <span class="gauge" aria-hidden="true"><span style="width:${Math.min(100, amount ? done / amount * 100 : 0)}%"></span></span>
+      <span class="gauge-text">${text}</span></button>`;
+  }
+
   function entryRow(e) {
     const cancelled = e.status === 'cancelled';
     const done = e.status === 'realised';
-    const status = cancelled ? 'annulée' : done ? 'réalisée' : 'prévue';
-    const actions = `<button class="edit-entry" data-edit-entry="${esc(e.id)}" role="menuitem">Modifier la dépense</button>` + (cancelled
-      ? `<button class="restore" data-restore="${esc(e.id)}" role="menuitem">Restaurer</button>`
-      : `<button class="cancel-entry" data-cancel="${esc(e.id)}" role="menuitem">Annuler la dépense</button>`);
-    const toggle = cancelled ? '' : `<button class="toggle" data-toggle="${esc(e.id)}" data-next="${done ? 'planned' : 'realised'}" aria-label="${done ? 'Marquer comme prévue' : 'Marquer comme réalisée'}">${done ? '✓ Réalisée' : 'À faire'}</button>`;
-    return `<div class="entry ${e.status}"><div class="entry-main"><b>${esc(e.label)}</b>${e.nature ? `<span class="nature-tag">${esc(e.nature)}</span>` : ''}
+    const gradual = isGradual(e);
+    const id = esc(e.id);
+    const status = cancelled ? 'annulée'
+      : gradual ? (done ? 'clôturée' : 'au fur et à mesure')
+      : done ? 'réalisée' : 'prévue';
+    const item = (kind, attrs, label) => `<button class="${kind}" ${attrs} role="menuitem">${label}</button>`;
+    let actions = item('edit-entry', `data-edit-entry="${id}"`, 'Modifier la dépense');
+    if (cancelled) actions += item('restore', `data-restore="${id}"`, 'Restaurer');
+    else if (gradual) {
+      actions = item('consume-entry', `data-consume="${id}"`, done ? 'Voir les passages' : 'Ajouter un montant') + actions
+        + (done ? item('reopen-entry', `data-toggle="${id}" data-next="planned"`, 'Rouvrir la dépense')
+          : item('close-entry', `data-close-entry="${id}"`, 'Clôturer la dépense'));
+      // De l'argent déjà sorti ne s'annule pas : on clôture.
+      if (!passagesOf(e.id).length) actions += item('cancel-entry', `data-cancel="${id}"`, 'Annuler la dépense');
+    } else actions += item('cancel-entry', `data-cancel="${id}"`, 'Annuler la dépense');
+    let toggle = '';
+    if (!cancelled && gradual) {
+      toggle = done
+        ? `<button class="gauge-closed" data-consume="${id}" aria-label="Voir les passages de ${esc(e.label)} (clôturée)">✓</button>`
+        : `<button class="gauge-add" data-consume="${id}" aria-label="Ajouter un montant sur ${esc(e.label)}">＋</button>`;
+    } else if (!cancelled) {
+      toggle = `<button class="toggle" data-toggle="${id}" data-next="${done ? 'planned' : 'realised'}" aria-label="${done ? 'Marquer comme prévue' : 'Marquer comme réalisée'}">${done ? '✓ Réalisée' : 'À faire'}</button>`;
+    }
+    const over = gradual && !cancelled && consumedOf(e.id) > Number(e.amount);
+    return `<div class="entry ${e.status}${gradual ? ' gradual' : ''}${over ? ' over' : ''}"><div class="entry-main"><b>${esc(e.label)}</b>${e.nature ? `<span class="nature-tag">${esc(e.nature)}</span>` : ''}
       <small>${e.bucket === 'tithe' ? 'Dîme calculée (10 %) · ' : ''}${status}${e.source === 'recurring' ? ' · récurrente' : ''}</small>${e.note ? `<small class="note">${esc(e.note)}</small>` : ''}</div>
       <div class="entry-row"><span class="entry-amount">${money(e.amount)}</span><div class="entry-side">${toggle}
-      <span class="entry-menu"><button class="more-entry" data-more="${esc(e.id)}" aria-haspopup="menu" aria-expanded="false" aria-label="Plus d’actions">…</button>
-      <span class="entry-actions-menu" data-menu="${esc(e.id)}" role="menu" hidden>${actions}</span></span></div></div></div>`;
+      <span class="entry-menu"><button class="more-entry" data-more="${id}" aria-haspopup="menu" aria-expanded="false" aria-label="Plus d’actions">…</button>
+      <span class="entry-actions-menu" data-menu="${id}" role="menu" hidden>${actions}</span></span></div></div>${gradual && !cancelled ? gaugeLine(e) : ''}</div>`;
   }
 
   function section(budget, category, title, totals) {
@@ -127,12 +183,17 @@
     draftLayer?.remove();
     $('#sheet').innerHTML = budgets.length ? budgets.map(card).join('') : '<p class="empty">Vos cartes de budget apparaîtront ici après la création du premier budget.</p>';
     if (draftLayer && state.draft) placeDraft(draftLayer);
+    state.refreshSheet?.();
     window.BudgetMotion?.refresh();
   }
 
+  let loadTicket = 0;
   async function load() {
+    const ticket = ++loadTicket;
     try {
-      state.db = await api('bootstrap');
+      const db = await api('bootstrap');
+      if (ticket !== loadTicket) return; // une lecture plus récente arrive : on ignore celle-ci
+      state.db = db;
       render();
     } catch (error) { alert(error.message); }
   }
@@ -172,7 +233,7 @@
 
   function openDraft(budgetId, category) {
     closeDraft();
-    state.draft = { budgetId, category, status: 'planned' };
+    state.draft = { budgetId, category, status: 'planned', tracking: 'single' };
     const sheet = document.createElement('div');
     sheet.className = 'draft-layer';
     sheet.innerHTML = `<div class="draft-backdrop" data-draft-close aria-hidden="true"></div>
@@ -181,13 +242,24 @@
       <button class="draft-close" type="button" data-draft-close aria-label="Fermer">×</button>
       <input data-field="label" placeholder="Libellé" aria-label="Libellé de la dépense" maxlength="180">
       <input data-field="amount" type="number" inputmode="numeric" min="1" placeholder="Montant" aria-label="Montant de la dépense">
+      ${window.BudgetTrackingField('draft-tracking', 'single')}
+      <input data-field="usual" type="number" inputmode="numeric" min="1" placeholder="Montant habituel (facultatif)" aria-label="Montant habituel d’un passage" hidden>
       <input data-field="note" placeholder="Note (optionnel)" aria-label="Note optionnelle" maxlength="300">
       <select data-field="nature" aria-label="Nature optionnelle"><option value="">Nature (optionnel)</option>${NATURES.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('')}</select>
       <button type="button" data-draft-toggle>Prévue</button>
       <button class="draft-submit" type="button" data-draft-save>Enregistrer la dépense</button>
       <p class="draft-error" role="status"></p></div>`;
+    sheet.addEventListener('change', event => {
+      if (event.target.name !== 'draft-tracking') return;
+      const gradual = event.target.value === 'gradual';
+      state.draft.tracking = event.target.value;
+      sheet.querySelector('[data-field="usual"]').hidden = !gradual;
+      sheet.querySelector('[data-draft-toggle]').hidden = gradual;
+      sheet.querySelector('[data-field="amount"]').placeholder = gradual ? 'Montant prévu' : 'Montant';
+    });
     placeDraft(sheet);
-    const focus = () => sheet.querySelector('[data-field="label"]')?.focus({ preventScroll: true });
+    // Ne jamais reprendre le curseur à un champ déjà choisi : la saisie partirait dans le libellé.
+    const focus = () => { if (!sheet.contains(document.activeElement)) sheet.querySelector('[data-field="label"]')?.focus({ preventScroll: true }); };
     requestAnimationFrame(focus);
     setTimeout(focus, 180);
   }
@@ -214,11 +286,15 @@
     const error = sheet.querySelector('.draft-error');
     const amount = Number(field('amount'));
     if (!field('label') || !(amount > 0)) { error.textContent = 'Libellé et montant positif requis.'; return; }
+    const gradual = state.draft.tracking === 'gradual';
+    const usual = gradual ? field('usual') : '';
+    if (usual !== '' && !(Number(usual) > 0)) { error.textContent = 'Le montant habituel doit être positif.'; return; }
     button.disabled = true;
     try {
       await api('expense', {
         id: crypto.randomUUID(), budget_id: state.draft.budgetId, amount, label: field('label'),
-        note: field('note'), nature: field('nature'), bucket: state.draft.category, status: state.draft.status, date: today(),
+        note: field('note'), nature: field('nature'), bucket: state.draft.category, date: today(),
+        status: gradual ? 'planned' : state.draft.status, tracking: state.draft.tracking, usual_amount: usual === '' ? null : Number(usual),
       });
       closeDraft();
       await load();
@@ -230,20 +306,238 @@
 
   /* ---------- Modification d'une dépense ou d'un budget ---------- */
 
-  async function editEntry(id) {
+  /** Fenêtre indépendante (en bas sur téléphone), retirée de la page à sa fermeture. */
+  function openSheet(className, titleId) {
+    const sheet = document.createElement('dialog');
+    sheet.className = 'entry-sheet ' + className;
+    sheet.setAttribute('aria-labelledby', titleId);
+    sheet.setAttribute('data-lenis-prevent', '');
+    sheet.addEventListener('close', () => sheet.remove());
+    sheet.addEventListener('click', event => { if (event.target.closest('[data-sheet-close]')) sheet.close(); });
+    document.body.append(sheet);
+    return sheet;
+  }
+
+  function editEntry(id) {
     const entry = state.db.expenses.find(e => e.id === id);
     if (!entry) return;
-    const label = prompt('Libellé :', entry.label);
-    if (label === null) return;
-    const amountText = prompt('Montant (F CFA) :', entry.amount);
-    if (amountText === null) return;
-    const amount = Number(amountText);
-    if (!label.trim() || !(amount > 0)) { alert('Libellé et montant (positif) requis.'); return; }
-    try { await api('expense_update', { id, label: label.trim(), amount }); await load(); } catch (e) { alert(e.message); }
+    const tithe = entry.bucket === 'tithe';
+    const hasPassages = passagesOf(id).length > 0;
+    const natures = !entry.nature || NATURES.includes(entry.nature) ? NATURES : [entry.nature, ...NATURES];
+    const sheet = openSheet('edit-expense', 'editEntryTitle');
+    sheet.innerHTML = `<form novalidate>
+      <div class="edit-head"><div><p class="ey">Modifier la dépense</p><h2 id="editEntryTitle">${esc(entry.label)}</h2></div>
+      <button type="button" class="close" data-sheet-close aria-label="Fermer">×</button></div>
+      <label>Libellé<input name="label" maxlength="180" value="${esc(entry.label)}"></label>
+      <label><span data-amount-label>Montant</span><input name="amount" type="number" min="1" inputmode="numeric" value="${esc(Number(entry.amount))}"></label>
+      ${tithe ? '<p class="tithe-note">La dîme se règle en une fois.</p>' : window.BudgetTrackingField('edit-tracking', entry.tracking || 'single', hasPassages ? 'single' : '')}
+      <p class="sheet-hint" data-hint></p>
+      <label data-usual>Montant habituel (facultatif)<input name="usual" type="number" min="1" inputmode="numeric" value="${entry.usual_amount ? esc(Number(entry.usual_amount)) : ''}"></label>
+      <label>Note (optionnelle)<input name="note" maxlength="300" value="${esc(entry.note || '')}"></label>
+      <label>Nature (optionnel)<select name="nature"><option value="">Aucune</option>${natures.map(n => `<option value="${esc(n)}" ${n === entry.nature ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+      <button type="submit" class="button">Enregistrer les modifications</button>
+      <p class="draft-error" role="status"></p></form>`;
+    const form = sheet.querySelector('form');
+    const tracking = () => form.querySelector('[name="edit-tracking"]:checked')?.value || 'single';
+    const refresh = () => {
+      const gradual = tracking() === 'gradual';
+      form.querySelector('[data-usual]').hidden = !gradual;
+      form.querySelector('[data-amount-label]').textContent = gradual ? 'Montant prévu' : 'Montant';
+      form.querySelector('[data-hint]').textContent = hasPassages
+        ? 'Pour repasser « En une fois », retire d’abord les passages.'
+        : gradual && !isGradual(entry) && entry.status === 'realised'
+          ? `Les ${money(entry.amount)} déjà marqués réalisés deviennent un premier passage.` : '';
+    };
+    form.addEventListener('change', refresh);
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      const value = name => form.elements[name].value.trim();
+      const error = form.querySelector('.draft-error');
+      const amount = Number(value('amount'));
+      const usual = tracking() === 'gradual' ? value('usual') : '';
+      if (!value('label') || !(amount > 0)) { error.textContent = 'Libellé et montant positif requis.'; return; }
+      if (usual !== '' && !(Number(usual) > 0)) { error.textContent = 'Le montant habituel doit être positif.'; return; }
+      const button = form.querySelector('[type="submit"]');
+      button.disabled = true;
+      try {
+        await api('expense_update', {
+          id, label: value('label'), amount, note: value('note'), nature: value('nature'),
+          ...(tithe ? {} : { tracking: tracking(), usual_amount: usual === '' ? null : Number(usual) }),
+        });
+        sheet.close();
+        await load();
+      } catch (e) {
+        error.textContent = e.message;
+        button.disabled = false;
+      }
+    });
+    refresh();
+    sheet.showModal();
   }
 
   async function setStatus(id, status) {
     try { await api('', { id, status }, 'update-status.php'); await load(); } catch (e) { alert(e.message); }
+  }
+
+  async function closeEntry(id) {
+    const entry = state.db.expenses.find(e => e.id === id);
+    if (!entry) return;
+    const done = consumedOf(id);
+    const left = Number(entry.amount) - done;
+    const ok = await confirmAction({
+      title: `Clôturer « ${entry.label} » ?`,
+      message: !done ? `Aucun passage : la dépense comptera pour 0 et les ${money(entry.amount)} redeviennent disponibles.`
+        : `${money(done)} comptés comme dépensés.` + (left > 0 ? ` Les ${money(left)} restants redeviennent disponibles.` : ''),
+      confirmLabel: 'Clôturer la dépense', cancelLabel: 'Pas maintenant', tone: 'neutral',
+    });
+    if (ok) await setStatus(id, 'realised');
+  }
+
+  /*
+   * Le cadran (lot 14) : on fait glisser le curseur vers l'avant, le montant ajouté
+   * s'affiche en grand, et rien n'est enregistré sans le bouton « Ajouter ».
+   */
+  function openConsume(id) {
+    if (!state.db.expenses.some(e => e.id === id)) return;
+    const sheet = openSheet('consume-sheet', 'consumeTitle');
+    sheet.innerHTML = `<div class="edit-head"><div><p class="ey" data-c="eyebrow"></p><h2 id="consumeTitle"></h2></div>
+      <button type="button" class="close" data-sheet-close aria-label="Fermer">×</button></div>
+      <div class="dial"><svg viewBox="0 0 140 140" aria-hidden="true"><circle class="dial-rail" cx="70" cy="70" r="60"/>
+        <circle class="dial-pending" cx="70" cy="70" r="60"/><circle class="dial-done" cx="70" cy="70" r="60"/></svg>
+        <div class="dial-center"><b data-c="big"></b><small data-c="caption"></small></div></div>
+      <p class="dial-sum" data-c="sum" aria-live="polite"></p>
+      <div class="dial-adder" data-c="adder">
+        <div class="dial-slider"><div class="dial-bar" aria-hidden="true"><i class="bar-pending"></i><i class="bar-done"></i><i class="bar-limit"></i></div>
+          <input type="range" step="${STEP}" aria-label="Montant à ajouter" data-c="range"></div>
+        <div class="dial-quick"><button type="button" data-c="usual"></button>
+          <label>Montant exact<input type="number" min="1" inputmode="numeric" data-c="exact"></label>
+          <label>Date<input type="date" min="2026-06-01" data-c="date" value="${today()}"></label></div>
+        <button type="button" class="button" data-c="add"></button>
+      </div>
+      <p class="sheet-status" role="status" data-c="status"></p>
+      <h3 class="edit-section">Passages</h3><div class="passages" data-c="history"></div>
+      <button type="button" class="sheet-secondary" data-c="state"></button>`;
+    const part = name => sheet.querySelector(`[data-c="${name}"]`);
+    const range = part('range');
+    let pending = 0;
+    // Un même ajout garde son identifiant d'un essai à l'autre : il ne peut pas compter deux fois.
+    let passageId = null;
+
+    const say = (message, failed = false) => {
+      part('status').textContent = message;
+      part('status').classList.toggle('failed', failed);
+    };
+    const setPending = value => { pending = Math.max(0, value); passageId = null; say(''); draw(); };
+
+    function draw() {
+      const entry = state.db.expenses.find(e => e.id === id);
+      if (!entry) { sheet.close(); return; }
+      const amount = Number(entry.amount);
+      const done = consumedOf(id);
+      const open = entry.status === 'planned';
+      if (!open) pending = 0;
+      const total = done + pending;
+      const over = total - amount;
+      sheet.classList.toggle('dogs', entry.bucket === 'dogs');
+      sheet.classList.toggle('over', over > 0);
+      sheet.classList.toggle('done-over', done > amount);
+      part('eyebrow').textContent = entry.status === 'cancelled' ? 'Dépense annulée' : open ? 'Au fur et à mesure' : 'Dépense clôturée';
+      $('#consumeTitle').textContent = entry.label;
+      const [big, caption] = pending ? ['+ ' + number(pending), 'à ajouter']
+        : over > 0 ? [number(over), 'de dépassement']
+        : open ? [number(amount - done), 'restants'] : [number(done), 'dépensés'];
+      part('big').textContent = big;
+      part('caption').textContent = caption;
+      part('sum').textContent = pending
+        ? `Total ${number(total)} sur ${money(amount)} · ` + (over > 0 ? `dépassement de ${number(over)}` : `il restera ${number(amount - total)}`)
+        : `Déjà ${number(done)} sur ${money(amount)}` + (!open && over < 0 ? ` · ${money(-over)} redevenus disponibles` : '');
+
+      const circle = 2 * Math.PI * 60;
+      [['.dial-done', done], ['.dial-pending', total]].forEach(([selector, value]) => {
+        const arc = sheet.querySelector(selector);
+        const share = Math.min(1, value / amount);
+        arc.style.strokeDasharray = `${share * circle} ${circle}`;
+        arc.style.visibility = share > 0 ? 'visible' : 'hidden';
+      });
+
+      // Le curseur part de ce qui est déjà consommé et avance par pas de 500 ajoutés.
+      part('adder').hidden = !open;
+      const min = done % STEP;
+      const reach = Math.max(amount * 1.4, done + Math.max(amount * .4, 2000), total);
+      const max = min + Math.ceil((reach - min) / STEP) * STEP;
+      range.min = min;
+      range.max = max;
+      range.value = total;
+      range.setAttribute('aria-valuetext', `Ajout de ${money(pending)}, total ${number(total)} sur ${money(amount)}`);
+      const at = value => Math.max(0, Math.min(100, (value - min) / (max - min) * 100)) + '%';
+      sheet.querySelector('.bar-done').style.width = at(done);
+      sheet.querySelector('.bar-pending').style.width = at(total);
+      sheet.querySelector('.bar-limit').style.left = at(amount);
+
+      const usual = Number(entry.usual_amount) || 0;
+      part('usual').hidden = !usual;
+      part('usual').textContent = '+ ' + number(usual);
+      part('add').textContent = pending ? `Ajouter ${money(pending)}` : 'Ajouter';
+
+      const passages = passagesOf(id);
+      part('history').innerHTML = passages.length ? passages.map(p => `<div class="passage"><span>${dayLabel(p.date)}${p._offline ? ' · à envoyer' : ''}</span>
+        <b>${money(p.amount)}</b><button type="button" data-passage="${esc(p.id)}" aria-label="Retirer ${esc(money(p.amount))} du ${esc(dayLabel(p.date))}">Retirer</button></div>`).join('')
+        : '<p class="empty">Aucun passage pour le moment.</p>';
+      part('state').hidden = entry.status === 'cancelled';
+      part('state').textContent = open ? 'Clôturer la dépense' : 'Rouvrir la dépense';
+    }
+
+    range.addEventListener('input', () => {
+      part('exact').value = '';
+      setPending(Math.round((Number(range.value) - consumedOf(id)) / STEP) * STEP);
+    });
+    part('exact').addEventListener('input', () => setPending(Math.round(Number(part('exact').value)) || 0));
+
+    sheet.addEventListener('click', async event => {
+      const button = event.target.closest('button');
+      if (!button) return;
+      const entry = state.db.expenses.find(e => e.id === id);
+      if (!entry) return;
+      if (button === part('usual')) { part('exact').value = ''; return setPending(Number(entry.usual_amount)); }
+      if (button === part('state')) return entry.status === 'planned' ? closeEntry(id) : setStatus(id, 'planned');
+      if (button.dataset.passage) {
+        const passage = passagesOf(id).find(p => p.id === button.dataset.passage);
+        const ok = await confirmAction({
+          title: `Retirer ${money(passage.amount)} ?`,
+          message: `Le passage du ${dayLabel(passage.date)} sur « ${entry.label} » sera effacé.`,
+          confirmLabel: 'Retirer le passage',
+        });
+        if (!ok) return;
+        try {
+          await api('consumption_delete', { id: passage.id });
+          await load();
+          say('Passage retiré.');
+        } catch (e) { say(e.message, true); }
+        return;
+      }
+      if (button !== part('add')) return;
+      if (!(pending > 0)) return say('Fais glisser le curseur ou saisis un montant.', true);
+      const amount = pending;
+      button.disabled = true;
+      try {
+        passageId ||= crypto.randomUUID();
+        const result = await api('consumption_add', { id: passageId, entry_id: id, amount, date: part('date').value || today() });
+        pending = 0;
+        passageId = null;
+        part('exact').value = '';
+        await load();
+        say(`${money(amount)} ajoutés.` + (result.queued ? ' Envoi dès le retour du réseau.' : ''));
+      } catch (e) {
+        // TypeError : le navigateur n'a pas pu joindre le serveur.
+        say(e instanceof TypeError ? 'Réseau instable : réessaie, l’ajout ne comptera qu’une fois.' : e.message, true);
+      }
+      button.disabled = false;
+    });
+
+    state.refreshSheet = draw;
+    sheet.addEventListener('close', () => { if (state.refreshSheet === draw) state.refreshSheet = null; });
+    sheet.showModal();
+    draw();
   }
 
   /*
@@ -419,7 +713,7 @@
           <a class="action-btn" id="exportExpenses" href="export-excel.php" download aria-label="Exporter en Excel">${svg('<path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/>')}<span>Excel</span></a>
         </div>
         <p class="ey">BUDGET JOSH</p><h1>Feuille de dépenses.</h1>
-        <p class="intro">Rond bleu coché = dépense réalisée. Rond vide = prévue. La dîme est déjà comptée dans les Priorités.</p>
+        <p class="intro">Rond bleu coché = dépense réalisée. Rond vide = prévue. Le « + » avance une dépense au fur et à mesure. La dîme est déjà comptée dans les Priorités.</p>
       </header>
       <main><button class="button" id="newBudget">+ Créer un budget</button><div id="overview" class="overview"></div><p class="ey">VOS BUDGETS</p><div id="sheet" class="sheet"></div></main>
       <dialog id="budgetDialog"><form id="budgetForm"><button type="button" class="close" aria-label="Fermer">×</button><p class="ey">NOUVEAU BUDGET</p><h2>Réglez le budget</h2>
@@ -495,6 +789,8 @@
       }
       if ('draftSave' in d) return saveDraft(t);
       if (d.toggle) return setStatus(d.toggle, d.next);
+      if (d.consume) { closeMenus(); return openConsume(d.consume); }
+      if (d.closeEntry) { closeMenus(); return closeEntry(d.closeEntry); }
       if (d.editEntry) { closeMenus(); return editEntry(d.editEntry); }
       if (d.cancel) {
         closeMenus();

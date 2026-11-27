@@ -24,7 +24,7 @@ function budgetRecurringNextDate(DateTimeImmutable $date, int $day): DateTimeImm
 function budgetRecurringGenerate(PDO $pdo, bool $dryRun = false): array
 {
     $models = $pdo->query(
-        'SELECT id,label,amount,bucket,nature,note,day_of_month,next_date
+        'SELECT id,label,amount,bucket,nature,note,tracking,usual_amount,day_of_month,next_date
          FROM recurring_expenses WHERE active=1 ORDER BY next_date'
     )->fetchAll(PDO::FETCH_ASSOC);
     $graceFor = $pdo->prepare(
@@ -50,11 +50,11 @@ function budgetRecurringGenerate(PDO $pdo, bool $dryRun = false): array
                     $pdo->prepare('INSERT INTO recurring_expense_runs(recurring_id,occurrence_date,entry_id) VALUES(?,?,?)')
                         ->execute([$model['id'], $date->format('Y-m-d'), $entryId]);
                     $pdo->prepare(
-                        "INSERT INTO entries(id,budget_id,type,amount,label,note,bucket,nature,status,entry_date,source)
-                         VALUES(?,?, 'expense',?,?,?,?,?,'planned',?,'recurring')"
+                        "INSERT INTO entries(id,budget_id,type,amount,label,note,bucket,nature,status,tracking,usual_amount,entry_date,source)
+                         VALUES(?,?, 'expense',?,?,?,?,?,'planned',?,?,?,'recurring')"
                     )->execute([
                         $entryId, $budgetId, $model['amount'], $model['label'], $model['note'],
-                        $model['bucket'], $model['nature'], $date->format('Y-m-d'),
+                        $model['bucket'], $model['nature'], $model['tracking'], $model['usual_amount'], $date->format('Y-m-d'),
                     ]);
                     $pdo->commit();
                     $stats['created']++;

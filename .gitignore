@@ -13,6 +13,7 @@ database/*
 !database/lot-11-recurring-monthly.sql
 !database/lot-12-payment-tithe-link.sql
 !database/lot-13-tontine.sql
+!database/lot-14-gradual-expenses.sql
 !database/schema.sql
 # Bloque la lecture publique de database/ une fois le Basic Auth retire (lot 8).
 !database/.htaccess

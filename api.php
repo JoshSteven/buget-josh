@@ -8,8 +8,10 @@ declare(strict_types=1);
  * POST ?action=payment          paiement supplémentaire + dîme 10 %
  * POST ?action=payment_update   correction d'un paiement ; la dîme liée suit (10 %)
  * POST ?action=payment_delete   suppression d'un paiement et de sa dîme (jamais le dernier)
- * POST ?action=expense          nouvelle dépense
- * POST ?action=expense_update   libellé et montant d'une dépense
+ * POST ?action=expense          nouvelle dépense, en une fois ou au fur et à mesure
+ * POST ?action=expense_update   libellé, montant et, si fournis, note, nature et type de suivi
+ * POST ?action=consumption_add     passage sur une dépense « au fur et à mesure » (rejouable sans doublon)
+ * POST ?action=consumption_delete  retrait d'un passage
  * POST ?action=budget_label     nom d'un Projet
  * POST ?action=budget_month     mois d'une Grâce
  */
@@ -33,14 +35,21 @@ try {
              GROUP BY b.id ORDER BY COALESCE(b.period_month,b.project_date) DESC,b.created_at DESC"
         )->fetchAll();
         $expenses = $pdo->query(
-            "SELECT id,budget_id,payment_id,type,amount,label,note,bucket,nature,status,source,DATE_FORMAT(entry_date,'%Y-%m-%d') date
+            "SELECT id,budget_id,payment_id,type,amount,label,note,bucket,nature,status,tracking,usual_amount,source,DATE_FORMAT(entry_date,'%Y-%m-%d') date
              FROM entries ORDER BY entry_date DESC,created_at DESC"
         )->fetchAll();
         $payments = $pdo->query(
             "SELECT id,budget_id,amount,label,DATE_FORMAT(payment_date,'%Y-%m-%d') date
              FROM budget_payments ORDER BY payment_date DESC,created_at DESC"
         )->fetchAll();
-        budgetJson(['budgets' => $budgets, 'expenses' => $expenses, 'payments' => $payments, 'totals' => budgetTotals($pdo)]);
+        $consumptions = $pdo->query(
+            "SELECT id,entry_id,amount,DATE_FORMAT(consumed_on,'%Y-%m-%d') date
+             FROM entry_consumptions ORDER BY consumed_on DESC,created_at DESC"
+        )->fetchAll();
+        budgetJson([
+            'budgets' => $budgets, 'expenses' => $expenses, 'payments' => $payments,
+            'consumptions' => $consumptions, 'totals' => budgetTotals($pdo),
+        ]);
     }
 
     if ($method !== 'POST') budgetFail('Méthode non autorisée.', 405);
@@ -149,24 +158,94 @@ try {
             if (!in_array($d['bucket'] ?? '', ['priority', 'dogs'], true)) budgetFail('Choisissez Priorités ou Petits chiens.');
             $date = budgetDate($d, 'date');
             if (substr($date, 0, 7) < BUDGET_FIRST_MONTH) budgetFail('Les dépenses commencent en juin 2026.');
+            $tracking = budgetTracking($d);
+            // Une dépense au fur et à mesure commence ouverte : elle se « clôture » ensuite.
+            if ($tracking === 'gradual' && $d['status'] !== 'planned') budgetFail('Une dépense au fur et à mesure commence ouverte.');
             $pdo->prepare(
-                "INSERT INTO entries(id,budget_id,type,amount,label,note,bucket,nature,status,entry_date,source)
-                 VALUES(?,?,'expense',?,?,?,?,?,?,?,'budget')"
+                "INSERT INTO entries(id,budget_id,type,amount,label,note,bucket,nature,status,tracking,usual_amount,entry_date,source)
+                 VALUES(?,?,'expense',?,?,?,?,?,?,?,?,?,'budget')"
             )->execute([
                 budgetId($d), $budgetId, budgetAmount($d), budgetText($d, 'label', 180),
-                budgetText($d, 'note', 300, false), $d['bucket'], budgetText($d, 'nature', 40, false), $d['status'], $date,
+                budgetText($d, 'note', 300, false), $d['bucket'], budgetText($d, 'nature', 40, false), $d['status'],
+                $tracking, $tracking === 'gradual' ? budgetOptionalAmount($d, 'usual_amount') : null, $date,
             ]);
             budgetJson(['ok' => true]);
         }
 
         case 'expense_update': {
+            // Les champs absents de la requête gardent leur valeur (ancienne file hors connexion comprise).
             $id = budgetId($d);
             $label = budgetText($d, 'label', 180);
             $amount = budgetAmount($d);
-            $exists = $pdo->prepare("SELECT 1 FROM entries WHERE id=? AND bucket IN ('priority','dogs','tithe')");
-            $exists->execute([$id]);
-            if (!$exists->fetchColumn()) budgetFail('Dépense introuvable.', 404);
-            $pdo->prepare("UPDATE entries SET label=?,amount=? WHERE id=?")->execute([$label, $amount, $id]);
+            $query = $pdo->prepare(
+                "SELECT amount,bucket,status,tracking,usual_amount,note,nature,DATE_FORMAT(entry_date,'%Y-%m-%d') date
+                 FROM entries WHERE id=? AND bucket IN ('priority','dogs','tithe')"
+            );
+            $query->execute([$id]);
+            $entry = $query->fetch() ?: budgetFail('Dépense introuvable.', 404);
+
+            $tracking = array_key_exists('tracking', $d) ? budgetTracking($d) : $entry['tracking'];
+            if ($tracking === 'gradual' && $entry['bucket'] === 'tithe') budgetFail('La dîme se règle en une fois.');
+            $usual = null;
+            if ($tracking === 'gradual') {
+                $usual = array_key_exists('usual_amount', $d) ? budgetOptionalAmount($d, 'usual_amount') : $entry['usual_amount'];
+            }
+            $note = array_key_exists('note', $d) ? budgetText($d, 'note', 300, false) : $entry['note'];
+            $nature = array_key_exists('nature', $d) ? budgetText($d, 'nature', 40, false) : $entry['nature'];
+
+            $status = $entry['status'];
+            $firstPassage = null;
+            if ($tracking !== $entry['tracking']) {
+                if ($tracking === 'single') {
+                    $count = $pdo->prepare('SELECT COUNT(*) FROM entry_consumptions WHERE entry_id=?');
+                    $count->execute([$id]);
+                    if ((int) $count->fetchColumn() > 0) {
+                        budgetFail('Des passages sont déjà enregistrés : retire-les d’abord, ou clôture la dépense.');
+                    }
+                    if ($status === 'realised') $status = 'planned';
+                } elseif ($status === 'realised') {
+                    // Déjà payée en une fois : le montant devient un premier passage, les totaux ne bougent pas.
+                    $firstPassage = (float) $entry['amount'];
+                    $status = 'planned';
+                }
+            }
+
+            $pdo->beginTransaction();
+            $pdo->prepare('UPDATE entries SET label=?,amount=?,note=?,nature=?,status=?,tracking=?,usual_amount=? WHERE id=?')
+                ->execute([$label, $amount, $note, $nature, $status, $tracking, $usual, $id]);
+            if ($firstPassage !== null) {
+                $pdo->prepare('INSERT INTO entry_consumptions(id,entry_id,amount,consumed_on) VALUES(?,?,?,?)')
+                    ->execute([bin2hex(random_bytes(16)), $id, $firstPassage, $entry['date']]);
+            }
+            $pdo->commit();
+            budgetJson(['ok' => true]);
+        }
+
+        case 'consumption_add': {
+            $id = budgetId($d);
+            $entryId = budgetId($d, 'entry_id');
+            // Rejouée par la file hors connexion, la même demande ne doit compter qu'une fois.
+            // Ce contrôle passe avant les autres : la dépense a pu être clôturée entre-temps.
+            $known = $pdo->prepare('SELECT entry_id FROM entry_consumptions WHERE id=?');
+            $known->execute([$id]);
+            $knownEntry = $known->fetchColumn();
+            if ($knownEntry !== false) {
+                if ($knownEntry !== $entryId) budgetFail('Identifiant déjà utilisé.');
+                budgetJson(['ok' => true, 'duplicate' => true]);
+            }
+            $query = $pdo->prepare('SELECT tracking,status FROM entries WHERE id=?');
+            $query->execute([$entryId]);
+            $entry = $query->fetch() ?: budgetFail('Dépense introuvable.', 404);
+            if ($entry['tracking'] !== 'gradual') budgetFail('Cette dépense se règle en une fois.');
+            if ($entry['status'] !== 'planned') budgetFail('Rouvre la dépense avant d’ajouter un montant.');
+            $pdo->prepare('INSERT INTO entry_consumptions(id,entry_id,amount,consumed_on) VALUES(?,?,?,?)')
+                ->execute([$id, $entryId, budgetAmount($d), budgetDate($d, 'date')]);
+            budgetJson(['ok' => true]);
+        }
+
+        case 'consumption_delete': {
+            // Retirer un passage déjà retiré n'est pas une erreur (file hors connexion).
+            $pdo->prepare('DELETE FROM entry_consumptions WHERE id=?')->execute([budgetId($d)]);
             budgetJson(['ok' => true]);
         }
 

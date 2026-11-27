@@ -55,7 +55,11 @@ foreach ($pending as $file) {
     if ($dryRun) { echo "À appliquer : $file\n"; continue; }
     $sql = (string) file_get_contents(dirname(__DIR__) . '/database/' . $file);
     try {
-        $pdo->exec($sql);
+        // Un fichier contient plusieurs instructions : il faut parcourir chaque résultat, sinon
+        // une erreur à partir de la 2e instruction passe inaperçue (constaté au lot 14 avec exec()).
+        $result = $pdo->query($sql);
+        do { } while ($result->nextRowset());
+        $result->closeCursor();
         $pdo->prepare('INSERT INTO schema_migrations(filename) VALUES(?)')->execute([$file]);
         echo "Appliquée : $file\n";
     } catch (Throwable $error) {
