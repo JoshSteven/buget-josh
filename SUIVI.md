@@ -8,7 +8,8 @@ Mis à jour le 27 novembre 2026. Les règles et l'architecture sont dans `CONTEX
 |---|---|
 | Production | **`4611481`, déployé le 24 novembre par `npm run deploy`** : sauvegarde `budget-josh-deploy-20261124-115353.sql.gz`, migration lot 13 appliquée et vérifiée sur MariaDB (type `tontine` et contrainte de dates en place), site en ligne et API protégée. |
 | Local | **Lot 14 terminé, pas encore déployé.** IP de la box autorisée dans le pare-feu SSH : 154.66.162.121 (24 novembre). |
-| Qualité locale | 71 tests Playwright verts sur la base de test séparée (dont Axe sur 5 pages et le cadran), lint PHP et JS propres. |
+| Qualité locale | 73 tests Playwright sur la base de test séparée (dont Axe sur 5 pages et le cadran), 72 verts du premier coup et 1 « flaky » connu ; lint PHP et JS propres. |
+| Défaut en production | « Restaurer » sans effet quand une autre dépense annulée est dessous (reproduit sur `4611481`). Corrigé avec le lot 14. En attendant : restaurer d'abord la dépense annulée la plus basse, puis remonter. |
 | Migrations | Lots 2 à 13 appliqués en production. Lot 14 appliqué en local (sauvegarde `database/backup_local_avant_lot14_2026-11-27.sql`), en attente en production. |
 | Accès SSH | Alias `budgetjosh` (clé `id_ed25519_budgetjosh_o2switch` autorisée dans cPanel, IP 102.180.15.235 autorisée dans le pare-feu o2switch). Serveur roux.o2switch.net, PHP 8.3.36, composer et mysqldump disponibles. |
 

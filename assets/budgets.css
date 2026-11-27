@@ -32,7 +32,10 @@ h1{margin:0;font-size:26px}
 .cat-head span:last-child{color:var(--muted)}
 .entry{background:#f2f2f7;border-radius:10px;padding:9px 10px;margin:6px 0}
 .entry.realised{background:#eaf0ff}
-.entry.cancelled{background:#f2f2f7;opacity:.6}
+/* La transparence porte sur le contenu, jamais sur la ligne entière : sinon le menu « Restaurer » reste
+   prisonnier de la ligne, pâle et recouvert par la dépense annulée suivante. */
+.entry.cancelled{background:#f2f2f7}
+.entry.cancelled .entry-main,.entry.cancelled .entry-amount{opacity:.6}
 .entry.cancelled b{text-decoration:line-through}
 .entry b{display:block;font-size:13px}
 .entry small{display:block;color:var(--muted);font-size:10px;margin-top:1px}
@@ -100,7 +103,6 @@ header,main{max-width:560px}
 .cat-head{padding:0 4px 7px;margin:0}
 .entry{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0;padding:11px 4px;border-radius:0;border-bottom:1px solid #f2f2f7;background:transparent!important}
 .entry:last-of-type{border-bottom:0}
-.entry.cancelled{opacity:.58}
 .entry b{font-size:14px;line-height:1.25}
 .entry small{font-size:11px;margin-top:3px}
 .entry small.note{max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
