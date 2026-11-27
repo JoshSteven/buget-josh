@@ -23,13 +23,19 @@ SET @sql := IF(@has=0, 'ALTER TABLE `recurring_expenses` ADD COLUMN `usual_amoun
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- 3. Les passages. Ils disparaissent avec leur dépense (donc avec son budget).
-CREATE TABLE IF NOT EXISTS `entry_consumptions` (
-  `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `entry_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `amount` decimal(12,2) NOT NULL,
-  `consumed_on` date NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `consumption_entry` (`entry_id`),
-  CONSTRAINT `fk_consumption_entry` FOREIGN KEY (`entry_id`) REFERENCES `entries` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- entry_id reprend exactement le jeu de caractères de entries.id : en production la table entries est
+-- en latin1 (et non en utf8mb4 comme en local), et une clé étrangère exige deux colonnes identiques.
+SET @cs := (SELECT CHARACTER_SET_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='entries' AND COLUMN_NAME='id');
+SET @co := (SELECT COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='entries' AND COLUMN_NAME='id');
+SET @sql := CONCAT(
+  'CREATE TABLE IF NOT EXISTS `entry_consumptions` (',
+  '`id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,',
+  '`entry_id` char(36) CHARACTER SET ', @cs, ' COLLATE ', @co, ' NOT NULL,',
+  '`amount` decimal(12,2) NOT NULL,',
+  '`consumed_on` date NOT NULL,',
+  '`created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,',
+  'PRIMARY KEY (`id`),',
+  'KEY `consumption_entry` (`entry_id`),',
+  'CONSTRAINT `fk_consumption_entry` FOREIGN KEY (`entry_id`) REFERENCES `entries` (`id`) ON DELETE CASCADE',
+  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

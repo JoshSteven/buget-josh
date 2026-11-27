@@ -44,6 +44,12 @@ test('règle réalisé / prévu (unitaire, sans base)', () => {
 
 /* ---------- Niveau 2 : API, base et totaux ---------- */
 
+test('la migration passe aussi quand la table des dépenses est en latin1, comme en production', () => {
+  const output = php('migration-latin1.php');
+  expect(output).toContain('OK latin1');
+  expect(output).toContain('OK utf8mb4');
+});
+
 test('les passages avancent les totaux, le dépassement compte, la clôture libère le reste', async ({ request }) => {
   const budget = await makeBudget(request, 'Lot 14 totaux');
   try {

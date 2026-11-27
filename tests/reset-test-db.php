@@ -30,7 +30,8 @@ $pdo = new PDO("mysql:host={$config['host']};dbname=$database;charset=utf8mb4", 
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_EMULATE_PREPARES => true,
 ]);
-$pdo->exec((string) file_get_contents($root . '/database/schema.sql'));
+// BUDGET_JOSH_SCHEMA : rejouer la suite sur une autre structure (par exemple celle de la production).
+$pdo->exec((string) file_get_contents(getenv('BUDGET_JOSH_SCHEMA') ?: $root . '/database/schema.sql'));
 $pdo->exec((string) file_get_contents(__DIR__ . '/fixtures.sql'));
 $pdo->prepare('INSERT INTO app_credentials(id,password_hash) VALUES(1,?)')->execute([password_hash($password, PASSWORD_DEFAULT)]);
 
