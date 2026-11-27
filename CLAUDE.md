@@ -31,6 +31,7 @@
 - `nature` reste facultative et n’est jamais associée automatiquement à un bucket.
 - Les dépenses annulées sont exclues des totaux.
 - Les liaisons ciblent `goal_tasks` et utilisent `ON DELETE SET NULL`.
+- La base de production diffère de la base locale (cinq tables en latin1, MariaDB, mode SQL non strict) : rejouer toute migration sur la structure de production avant déploiement (`CONTEXTE.md` section 4).
 - Interface en français, montants en F CFA, priorité au mobile et aux actions tactiles de 44 px environ.
 
 ## Objectifs — modèle actif
@@ -50,6 +51,6 @@
 - Pendant l’implémentation, expliquer le pourquoi des choix backend/frontend et distinguer clairement correction nécessaire, amélioration optionnelle et changement de périmètre.
 - À chaque étape importante, présenter les constats et demander une décision lorsque plusieurs solutions modifient le produit ou les données ; ne pas exécuter silencieusement une extension substantielle.
 - Après le code, proposer les tests adaptés, vérifier le flux complet et expliquer ce qui reste impossible à prouver localement (appareil réel, production, permissions externes).
-- Tester, mettre à jour la mémoire, commit et push à la fin d’un lot validé.
+- Tester, mettre à jour la mémoire, commit et push à la fin d’un lot validé. Tenir `CONTEXTE.md` et `SUIVI.md` à jour au fil du travail (demande du 27 novembre 2026).
 - Workflow Git préféré : terminer le lot → vérifier rapidement le diff et les tests → commit cohérent → push → pull si nécessaire pour resynchroniser/valider l’état distant. Le `pull` n’est pas une étape obligatoire avant de commencer ; le statut Git sert surtout de garde-fou léger. Ne jamais mélanger les fichiers staged d’un autre intervenant.
-- Déploiement : pour Budget Josh, GitHub → cPanel Git Version Control (`Update from Remote` puis `Deploy HEAD Commit`) ; pour les autres projets, SSH selon le remote configuré.
+- Déploiement : pour Budget Josh, `npm run deploy` après accord (boutons cPanel Git Version Control en secours) ; pour les autres projets, SSH selon le remote configuré.

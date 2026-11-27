@@ -8,11 +8,11 @@ PWA personnelle de Josh, en français, pensée d'abord pour le téléphone. Elle
 
 | Élément | Référence |
 |---|---|
-| Local | `D:\laragon\www\buget-josh` (Laragon, PHP 8.2 local, MySQL 8.4) |
-| Production | `https://depensesjosh.brightlightmind.online` (o2switch, PHP 8.3) |
+| Local | `D:\laragon\www\buget-josh` (Laragon, PHP 8.3, MySQL 8.4) |
+| Production | `https://depensesjosh.brightlightmind.online` (o2switch, PHP 8.3, MariaDB 11.4) |
 | Base de production | `sc1tijo0515_depenses_budgetjosh` |
 | Dépôt | `github.com/JoshSteven/buget-josh`, branche `master`, public |
-| Déploiement | cPanel Git Version Control : `Update from Remote` puis `Deploy HEAD Commit` |
+| Déploiement | `npm run deploy` depuis le PC ; les boutons cPanel Git Version Control restent en secours |
 
 Les données de production sont les vraies finances personnelles de Josh depuis le 29 juillet 2026.
 
@@ -92,9 +92,29 @@ Téléphone : barre fixe en bas à 4 icônes avec libellés courts et zone sûre
 - **PWA** : `manifest.webmanifest`, `sw.js` (réseau d'abord, cache de secours, version à changer à chaque livraison visible), file d'écritures hors connexion dans `localStorage`. Scripts versionnés par `?v=<filemtime>`.
 - **Hors connexion** : `offline-sync.js` met les saisies en file et modifie tout de suite son cache local. `sw.js` marque une lecture des budgets reprise de son cache (`X-Budget-Cache`) pour que ce cache local prime. Les ajouts de passage portent un identifiant fixe : rejoués, ils ne comptent qu'une fois.
 - **Migrations** : `bin/migrate.php` parcourt chaque instruction d'un fichier (corrigé au lot 14 : avec `exec()`, une erreur après la première instruction passait inaperçue).
-- **Écart production / local (constaté le 27 novembre 2026)** : en production (MariaDB 11.4), `budgets`, `budget_payments`, `entries`, `goal_tracks` et `goal_tasks` sont en **latin1_swedish_ci** ; en local et dans `schema.sql` elles sont en utf8mb4. Toute nouvelle clé étrangère vers ces tables doit reprendre le jeu de caractères de la colonne visée (voir `lot-14-gradual-expenses.sql`). Avant un déploiement avec migration, la rejouer sur la structure de production (`BUDGET_JOSH_SCHEMA` permet d'y lancer toute la suite).
+- **Bases PC et serveur** : même application, mais deux bases qui ne se ressemblent pas en tout (section suivante).
 - **Tests** : Playwright, `npm test`. Ils démarrent leur propre serveur (port 8081) sur la base **`budget_josh_test`**, recréée à chaque lancement depuis `database/schema.sql` et des données fictives (`tests/fixtures.sql`). La base de développement `budget_josh` n'est jamais touchée. Une seconde tentative par test absorbe les fermetures inattendues du navigateur sous Windows.
 - **Déploiement** : **`npm run deploy`** depuis le PC (tests, push GitHub, puis par SSH : dépôt cPanel, copie des fichiers, composer, sauvegarde, migrations, contrôle des Cron, vérification du site). `npm run deploy:simuler` ne modifie rien. Alias SSH `budgetjosh`, clé dédiée ; si la box change d'IP, l'ajouter dans cPanel > Autorisation SSH. Les boutons cPanel restent possibles en secours.
+- **Fragilité connue du déploiement** : le code est copié (étape 2) avant la mise à jour de la base (étape 5). Une migration qui échoue laisse le site en panne. La simulation ne le détecte pas.
+
+### PC et serveur : ce qui diffère (vérifié le 27 novembre 2026)
+
+Le code est le même partout (Git). Les bases, elles, ont été créées séparément.
+
+| Point | PC (Laragon) | Serveur (production) |
+|---|---|---|
+| Moteur | MySQL 8.4 | MariaDB 11.4 |
+| Jeu de caractères de `budgets`, `budget_payments`, `entries`, `goal_tracks`, `goal_tasks` | utf8mb4 | **latin1** |
+| Autres tables | utf8mb4 | utf8mb4 |
+| Mode SQL | strict | **vide** (non strict) |
+| `entries.budget_id` | facultatif | obligatoire |
+| `entries.source`, valeur par défaut | `personal` | `budget` |
+| Tables `annual_goals`, `annual_goal_months`, `goals`, `monthly_goals` | présentes (anciennes) | absentes |
+| Données | base d'essai | données réelles |
+
+- **Origine** : la base du serveur a latin1 comme jeu de caractères par défaut (l'export du 5 août 2026 montrait déjà ces tables ainsi). Les cinq tables créées sans le préciser en ont hérité ; les migrations suivantes précisent utf8mb4. MySQL 8 sur le PC utilise utf8mb4 par défaut. Ce n'est donc pas une version en retard sur le PC.
+- **Effet visible** : sur le serveur, un emoji ou un symbole hors latin1 saisi dans un libellé, une note ou un titre est remplacé par « ? » sans message (reproduit sur le PC avec les mêmes réglages). Les accents français passent.
+- **Règle** : toute nouvelle clé étrangère vers ces cinq tables reprend le jeu de caractères de la colonne visée (voir `lot-14-gradual-expenses.sql`, test `tests/migration-latin1.php`). Avant un déploiement avec migration, la rejouer sur la structure de production, exportée sans données ; la variable `BUDGET_JOSH_SCHEMA` permet d'y lancer toute la suite de tests.
 
 ## 5. Sécurité (invariants)
 
@@ -133,4 +153,5 @@ Téléphone : barre fixe en bas à 4 icônes avec libellés courts et zone sûre
 - Avant le code : plan court et mini-revue (besoin, flux, données, risques, dépendances). Séparer correction nécessaire, amélioration optionnelle et changement de périmètre. Demander une décision quand le produit ou les données changent.
 - Après le code : tests proportionnés, vérification visuelle au navigateur en 375 px puis en taille ordinateur, et liste de ce qui reste impossible à prouver localement (vrai téléphone, production, Push).
 - Git : commit après chaque tâche cohérente, avec `CONTEXTE.md` et `SUIVI.md` à jour. Push à la fin d'un lot. Ne jamais mélanger les fichiers d'un autre intervenant.
-- Déploiement : push GitHub, puis dans cPanel `Update from Remote` et `Deploy HEAD Commit`. Vérifier que le SHA affiché correspond, puis smoke test de l'URL (redirection vers `login.php` sans session).
+- **Demande de Josh (27 novembre 2026) : tenir les documents de contexte à jour au fil du travail** (décisions, constats, état, points en attente), pour que le suivi reste possible d'une séance à l'autre.
+- Déploiement, sur accord de Josh : `npm run deploy`. Vérifier ensuite que le SHA déployé correspond, que l'API reste protégée et, après une migration, que les données et les totaux sont inchangés.
